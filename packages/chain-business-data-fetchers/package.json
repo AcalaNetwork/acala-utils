@@ -1,0 +1,12 @@
+{
+  "name": "@acala-weaver/chain-business-data-fetcher",
+  "version": "0.0.1",
+  "description": "databse modules",
+  "author": "qiuhao <qiuhao951@gmail.com>",
+  "homepage": "",
+  "license": "Apache-2.0",
+  "main": "src/index.ts",
+  "dependencies": {
+    "sequelize": "^6.2.2"
+  }
+}

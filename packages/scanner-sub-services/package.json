@@ -1,0 +1,15 @@
+{
+  "name": "@acala-weaver/scanner-sub-service",
+  "version": "0.0.1",
+  "description": "services for handle extrisic, event, block",
+  "author": "qiuhao <qiuhao951@gmail.com>",
+  "homepage": "",
+  "license": "Apache-2.0",
+  "main": "src/index.ts",
+  "dependencies": {
+    "@acala-network/types": "beta",
+    "@acala-weaver/types": "^0.0.1",
+    "@acala-weaver/database-models": "^0.0.1",
+    "sequelize": "^6.2.2"
+  }
+}

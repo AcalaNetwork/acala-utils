@@ -1,0 +1,12 @@
+{
+  "name": "@acala-weaver/scanner",
+  "version": "0.0.1",
+  "description": "@acala-weaver/scanner",
+  "author": "qiuhao <qiuhao951@gmail.com>",
+  "license": "Apache-2.0",
+  "main": "src/index.ts",
+  "dependencies": {
+    "@open-web3/app-util": "beta",
+    "@acala-weaver/types": "^0.0.1"
+  }
+}

@@ -1,0 +1,18 @@
+{
+    "compilerOptions": {
+        "target": "ESNext",
+        "module": "commonjs",
+        "skipLibCheck": true,
+        "strict": true,
+        "baseUrl": "packages",
+        "paths": {
+            "@acala-weaver/types": ["types"],
+            "@acala-weaver/scanner": ["scanner"],
+            "@acala-weaver/scanner-sub-service": ["services"],
+            "@acala-weaver/chain-business-data-fetcher": ["chain-business-data-fetcher"],
+            "@acala-weaver/acala": ["acala"],
+            "@acala-weaver/graphql-server": ["graphql-server"],
+            "@acala-weaver/database-models": ["database-models"]
+        }
+    },
+}

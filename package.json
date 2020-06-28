@@ -1,0 +1,35 @@
+{
+  "name": "substrate-weaver",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "Apache-2.0",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "resolutions": {
+    "pg": "^8.0.3"
+  },
+  "scripts": {
+    "start:acala": "ts-node ./packages/acala/src/index.ts",
+    "lint": "eslint --ext .ts"
+  },
+  "dependencies": {
+    "@acala-network/types": "beta",
+    "@open-web3/indexer": "beta",
+    "@open-web3/scanner": "beta",
+    "@open-web3/util": "beta",
+    "@polkadot/rpc-provider": "^1.18.1",
+    "@polkadot/types": "^1.18.1",
+    "@typescript-eslint/eslint-plugin": "^3.4.0",
+    "@typescript-eslint/parser": "^3.4.0",
+    "dotenv": "^8.2.0",
+    "eslint": "^7.3.1",
+    "sequelize": "^6.0.0-beta.6",
+    "typescript": "^3.9.5"
+  },
+  "devDependencies": {
+    "lerna": "^3.16.4",
+    "ts-node": "^8.10.2"
+  }
+}
