@@ -67,7 +67,7 @@ export class Scanner {
         const startBlockNum = await this.getLatestSyncBlock();
         logger.info(`scanner start at#${startBlockNum}`);
 
-        this._scanner.subscribe({ start: startBlockNum ,concurrent: 100 }).subscribe(this.syncBlock);
+        this._scanner.subscribe({ start: startBlockNum ,concurrent: 10 }).subscribe(this.syncBlock);
     }
 
     async getLatestSyncBlock (): Promise<number> {
@@ -80,13 +80,16 @@ export class Scanner {
         const transition = await this.db.transaction({ autocommit: false });
         try {
             if (detail.result) {
-                await this.onEvent(detail.result, { transition });
-                await this.onExtrinsic(detail.result, { transition });
-                await this.onSyncBlockSuccess(detail.result, { transition });
+                await Promise.all([
+                    this.onEvent(detail.result, { transition }),
+                    this.onExtrinsic(detail.result, { transition }),
+                    this.onSyncBlockSuccess(detail.result, { transition })
+                ])
                 await transition.commit();
                 logger.info(`process #${detail.blockNumber} sucess`);
             } else {
                 await this.onSyncBlockError(detail.blockNumber, { transition });
+                await transition.commit();
                 logger.error(`process #${detail.blockNumber} failed`);
             }
         } catch (e) {
@@ -114,6 +117,6 @@ export class Scanner {
     }
 
     async onEvent (detail: SubscribeBlock['result'], config: HandlerConfig): Promise<void> {
-        await Promise.all(detail.events.map((event, index) => this.processSubService('onEvent', [event, detail, config])));
+        await Promise.all(detail.events.map((event) => this.processSubService('onEvent', [event, detail, config])));
     }
 }

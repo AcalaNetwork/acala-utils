@@ -9,10 +9,12 @@
             "@acala-weaver/types": ["types"],
             "@acala-weaver/scanner": ["scanner"],
             "@acala-weaver/scanner-sub-service": ["services"],
-            "@acala-weaver/chain-business-data-fetcher": ["chain-business-data-fetcher"],
+            "@acala-weaver/scanner-storage-data": ["scanner-storage-data"],
             "@acala-weaver/acala": ["acala"],
             "@acala-weaver/graphql-server": ["graphql-server"],
-            "@acala-weaver/database-models": ["database-models"]
+            "@acala-weaver/database-models": ["database-models"],
+            "@acala-weaver/storage-monitor": ["storage-monitor"]
+
         }
     },
 }

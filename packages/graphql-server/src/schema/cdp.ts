@@ -53,14 +53,18 @@ interface QueryCDPParams {
     limit?: number;
 }
 
+interface CDPData {
+    currency: string;
+    createAtBlock: number;
+}
+
 export const cdpResolver = {
     CDP: {
-        price: async (parent: any): Promise<any> => {
-            console.log(parent.currency, parent.createAtBlock)
+        price: async (parent: CDPData): Promise<any> => {
             const result = await PriceModel.findOne({
                 where: {
                     currency: parent.currency,
-                    createAtBlock: parent.createAtBlock 
+                    createAtBlock: parent.createAtBlock ,
                 }
             });
             return result;
@@ -72,6 +76,7 @@ export const cdpResolver = {
             const result = await CdpModel.findAll({
                 where: {
                     currency: params.currency,
+                    chartFlag: true,
                     createAt: {
                         [Op.between]: [params.startTime || 0, params.endTime || now]
                     }

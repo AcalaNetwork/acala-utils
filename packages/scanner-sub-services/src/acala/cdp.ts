@@ -55,6 +55,7 @@ export class CdpService extends BaseService {
         const globalStabilityFeeStorageKey = new StorageKey(registry, metadata.query.cdpEngine.globalStabilityFee);
         const collateralParamsStorageKey = new StorageKey(registry, [metadata.query.cdpEngine.collateralParams, currency]);
 
+        console.time(`get cdp info at ${block.number} ${currency}`);
         const [totalDebit, totalCollateral, debitExchangeRate, globalStabilityFee, collateralParams] = await Promise.all([
             this.scanner.getStorageValue<Balance>(totalDebitStorageKey, { blockNumber: block.number }),
             this.scanner.getStorageValue<Balance>(totalCollateralStorageKey, { blockNumber: block.number }),
@@ -62,6 +63,7 @@ export class CdpService extends BaseService {
             this.scanner.getStorageValue<Balance>(globalStabilityFeeStorageKey, { blockNumber: block.number }),
             this.scanner.getStorageValue<Codec>(collateralParamsStorageKey, { blockNumber: block.number }),
         ]);
+        console.timeEnd(`get cdp info at ${block.number} ${currency}`);
 
         return {
             id: `${block.number}-${currency}`,
@@ -72,7 +74,7 @@ export class CdpService extends BaseService {
             globalStabilityFee: globalStabilityFee.toString(),
             collateralParams: collateralParams.toJSON() as unknown as CollateralParams,
             consts: block.chainInfo.metadata.consts.cdpEngine as unknown,
-            chartFlag: block.number % 3600 === 0,
+            chartFlag: (block.number % 3600 === 0),
             createAtBlock: block.number,
             createAtBlockHash: block.hash,
             createAt: block.timestamp
@@ -88,4 +90,3 @@ export class CdpService extends BaseService {
         });
     }
 }
-

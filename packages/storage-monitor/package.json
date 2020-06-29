@@ -1,0 +1,9 @@
+{
+  "name": "@acala-weaver/storage-monitor",
+  "version": "0.0.0",
+  "author": "qiuhao <qiuhao951@gmail.com>",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@acala-weaver/scanner": "^0.0.1"
+  }
+}
