@@ -16,7 +16,8 @@ export class CdpModel extends Model {
     public totalCollateral!: string;
     public debitExchangeRate!: string;
     public globalStabilityFee!: string;
-    public callateralParams!: CollateralParams
+    public callateralParams!: CollateralParams;
+    public consts!: unknown;
 
     public createAtBlock!: number;
     public createAtBlockHash!: string;

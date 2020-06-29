@@ -2,12 +2,9 @@
   "name": "@acala-weaver/acala",
   "version": "0.0.0",
   "author": "qiuhao <qiuhao951@gmail.com>",
-  "homepage": "",
   "license": "Apache-2.0",
-  "scripts": {
-    "test": "echo \"Error: run tests from root\" && exit 1"
-  },
   "dependencies": {
-    "@acala-weaver/scanner": "^0.0.1"
+    "@acala-weaver/scanner": "^0.0.1",
+    "@acala-weaver/graphql-server": "^0.0.1"
   }
 }

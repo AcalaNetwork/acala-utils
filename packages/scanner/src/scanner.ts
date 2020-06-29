@@ -1,6 +1,5 @@
-import { Sequelize, Transaction } from 'sequelize';
+import { Sequelize } from 'sequelize';
 
-import { AnyFunction } from '@polkadot/types/types';
 import { assert } from '@polkadot/util';
 import OriginScanner from '@open-web3/scanner';
 import {
@@ -12,7 +11,6 @@ import { defaultLogger } from '@open-web3/util';
 
 import { BaseService, HandlerConfig } from '@acala-weaver/types';
 import { SyncService, BlockService, ExtrinsicService } from '@acala-weaver/scanner-sub-service';
-import { numberToLevel } from '@open-web3/util/logger';
 
 interface SyncControllerConfig extends ScannerOptions {
     db: Sequelize;
@@ -42,23 +40,25 @@ export class Scanner {
 
     private async processSubService<T extends BaseService, U extends BaseServiceMethods>(method: U, data: any[]) {
         await Promise.all(this.subServices.map((service) => {
+            /* eslint-disable-next-line */
             // @ts-ignore
             return typeof(service[method]) === 'function' ? service[method](...data) : undefined;
         }));
     }
 
     // add service
-    public addService(name: string, Service: typeof BaseService) {
+    public addService(name: string, Service: typeof BaseService): void {
         // ensure module doesn't exit
         const _index = this.subServices.findIndex((item): boolean => item.name === name);
 
         assert(_index === -1, `Aleardy have module:${name} at position:${_index}`);
 
+        /* eslint-disable-next-line */
         // @ts-ignore
         this.subServices.push(new Service(name, this.db, this._scanner));
     }
 
-    async start () {
+    async start (): Promise<void> {
         logger.info('prepare scanner');
         await this.processSubService('initDB', [this.db]);
         await this.db.sync();
@@ -67,7 +67,7 @@ export class Scanner {
         const startBlockNum = await this.getLatestSyncBlock();
         logger.info(`scanner start at#${startBlockNum}`);
 
-        this._scanner.subscribe({ start: startBlockNum,  concurrent: 1 }).subscribe(this.syncBlock);
+        this._scanner.subscribe({ start: startBlockNum,  concurrent: 10 }).subscribe(this.syncBlock);
     }
 
     async getLatestSyncBlock (): Promise<number> {
@@ -76,20 +76,19 @@ export class Scanner {
         return (syncService as SyncService).getLatestBlockNumber();
     }
 
-    async syncBlock (detail: SubscribeBlock | SubscribeBlockError) {
+    async syncBlock (detail: SubscribeBlock | SubscribeBlockError): Promise<void> {
         const transition = await this.db.transaction({ autocommit: false });
 
         try {
             if (detail.result) {
-                await this.handleBlock(detail.result, { transition });
-                await this.handleEvent(detail.result, { transition });
-                await this.handleExtrinsic(detail.result, { transition });
-                await this.handleSyncBlockSuccess(detail.result, { transition });
+                await this.onEvent(detail.result, { transition });
+                await this.onExtrinsic(detail.result, { transition });
+                await this.onSyncBlockSuccess(detail.result, { transition });
 
                 await transition.commit();
                 logger.info(`process #${detail.blockNumber} sucess`);
             } else {
-                await this.handleSyncBlockError(detail.blockNumber, { transition });
+                await this.onSyncBlockError(detail.blockNumber, { transition });
                 logger.error(`process #${detail.blockNumber} failed`);
             }
         } catch (e) {
@@ -98,27 +97,23 @@ export class Scanner {
         }
     }
 
-    async handleSyncBlockStart (blockNum: number, config: HandlerConfig) {
+    async onSyncBlockStart (blockNum: number, config: HandlerConfig): Promise<void> {
         await this.processSubService('onSyncBlockStart', [blockNum, config]);
     }
 
-    async handleSyncBlockError (blockNum: number, config: HandlerConfig) {
+    async onSyncBlockError (blockNum: number, config: HandlerConfig): Promise<void> {
         await this.processSubService('onSyncBlockError', [blockNum, config]);
     }
 
-    async handleSyncBlockSuccess (block: SubscribeBlock['result'], config: HandlerConfig) {
+    async onSyncBlockSuccess (block: SubscribeBlock['result'], config: HandlerConfig): Promise<void> {
         await this.processSubService('onSyncBlockSuccess', [block, config]);
     }
-
-    async handleBlock (detail: SubscribeBlock['result'], config: HandlerConfig) {
-        await this.processSubService('onSyncBlock', [detail, config]);
-    }
-
-    async handleExtrinsic (detail: SubscribeBlock['result'], config: HandlerConfig) {
+   
+    async onExtrinsic (detail: SubscribeBlock['result'], config: HandlerConfig): Promise<void> {
         await Promise.all(detail.extrinsics.map((extrinsic, index) => this.processSubService('onExtrinsic', [extrinsic, index, detail, config])));
     }
 
-    async handleEvent (detail: SubscribeBlock['result'], config: HandlerConfig) {
+    async onEvent (detail: SubscribeBlock['result'], config: HandlerConfig): Promise<void> {
         await Promise.all(detail.events.map((event, index) => this.processSubService('onEvent', [event, detail, config])));
     }
 }

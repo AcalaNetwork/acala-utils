@@ -18,9 +18,6 @@ export abstract class BaseService {
     // initialize databse
     abstract initDB(sequelize: Sequelize): void;
 
-    // execute when receive block
-    async onSyncBlock?(block: Block, config?: HandlerConfig): Promise<void>;
-
     // execute when before sync block
     async onSyncBlockStart?(blockNum: number, config?: HandlerConfig): Promise<void>;
 

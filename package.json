@@ -11,7 +11,8 @@
     "pg": "^8.0.3"
   },
   "scripts": {
-    "start:acala": "ts-node ./packages/acala/src/index.ts",
+    "graphql:acala": "ts-node ./packages/acala/src/graphql.ts",
+    "sync:acala": "ts-node ./packages/acala/src/sync.ts",
     "lint": "eslint --ext .ts"
   },
   "dependencies": {
