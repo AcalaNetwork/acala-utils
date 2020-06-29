@@ -35,7 +35,13 @@ async function run (): Promise<void> {
   await scanner.start();
 }
 
+// if error occur, exit
 run().catch((error) => {
-    console.log('error', error);
-    process.exit(1);
+  console.log(error);
+  process.exit(1);
+});
+
+process.on('unhandledRejection', () => {
+  console.log('unhandledRejection');
+  process.exit(1);
 });

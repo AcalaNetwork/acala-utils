@@ -67,7 +67,7 @@ export class Scanner {
         const startBlockNum = await this.getLatestSyncBlock();
         logger.info(`scanner start at#${startBlockNum}`);
 
-        this._scanner.subscribe({ start: startBlockNum,  concurrent: 10 }).subscribe(this.syncBlock);
+        this._scanner.subscribe({ start: startBlockNum ,concurrent: 100 }).subscribe(this.syncBlock);
     }
 
     async getLatestSyncBlock (): Promise<number> {
@@ -78,13 +78,11 @@ export class Scanner {
 
     async syncBlock (detail: SubscribeBlock | SubscribeBlockError): Promise<void> {
         const transition = await this.db.transaction({ autocommit: false });
-
         try {
             if (detail.result) {
                 await this.onEvent(detail.result, { transition });
                 await this.onExtrinsic(detail.result, { transition });
                 await this.onSyncBlockSuccess(detail.result, { transition });
-
                 await transition.commit();
                 logger.info(`process #${detail.blockNumber} sucess`);
             } else {
@@ -94,6 +92,8 @@ export class Scanner {
         } catch (e) {
             logger.error(e);
             await transition.rollback();
+
+            throw e;
         }
     }
 

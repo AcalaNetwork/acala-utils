@@ -26,6 +26,7 @@ export class TransferService extends BaseService {
                 to: args['dest'],
                 currency: args['currency_id'],
                 amount: args['amount'],
+                result: extrinsic.result,
                 createAtBlock: block.number,
                 createAtBlockHash: block.hash,
                 createAt: block.timestamp

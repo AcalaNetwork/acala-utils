@@ -19,6 +19,7 @@ export class CdpModel extends Model {
     public callateralParams!: CollateralParams;
     public consts!: unknown;
 
+    public chartFlag!: boolean;
     public createAtBlock!: number;
     public createAtBlockHash!: string;
     public createAt!: number;
@@ -51,6 +52,9 @@ export function initCdpModel (db: Sequelize): Model {
         },
         consts: {
             type: DataTypes.JSON
+        },
+        chartFlag: {
+            type: DataTypes.BLOB
         },
         createAtBlock: {
             type: DataTypes.BIGINT
