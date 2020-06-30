@@ -40,9 +40,14 @@ export const cdpTypeDefs = gql`
 
     }
 
+    type CDPWithCurrency {
+        currency: String
+        cdps: [CDP]
+    }
 
     extend type Query {
         cdp(currency: String!, startTime: Date, endTime: Date, limit: Int, skip: Int): [CDP],
+        cdps(currencies: [String]!, limit: Int): [CDPWithCurrency]
     }
 `;
 
@@ -84,9 +89,32 @@ export const cdpResolver = {
                 order: [
                     ['createAtBlock', 'DESC']
                 ],
-                limit: params.limit || 20000,
+                limit: params.limit || 2000,
             });
             return result;
+        },
+        cdps: async (_parent: unknown, params: { currencies: string[], limit: number }): Promise<unknown[]> => {
+            const now = new Date().getTime();
+            const result = await Promise.all(params.currencies.map((currency: string) => {
+                return CdpModel.findAll({
+                    where: {
+                        currency: currency,
+                        chartFlag: true,
+                        createAt: {
+                            [Op.between]: [0, now]
+                        }
+                    },
+                    order: [
+                        ['createAtBlock', 'DESC']
+                    ],
+                    limit: params.limit || 2000,
+                });
+            }));
+
+            return params.currencies.map((currency: string, index: number) => ({
+                currency,
+                cdps: result[index]
+            }));
         }
     }
 }

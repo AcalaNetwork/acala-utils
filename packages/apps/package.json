@@ -1,0 +1,11 @@
+{
+  "name": "@acala-weaver/apps",
+  "version": "0.0.0",
+  "author": "qiuhao <qiuhao951@gmail.com>",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@acala-weaver/graphql-server": "^0.0.1",
+    "@acala-weaver/storage-recoder": "^0.0.1",
+    "@acala-weaver/chain-recoder": "^0.0.1"
+  }
+}

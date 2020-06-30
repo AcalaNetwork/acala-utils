@@ -7,7 +7,6 @@
   "main": "src/index.ts",
   "dependencies": {
     "@acala-weaver/database-models": "^0.0.1",
-    "@acala-weaver/types": "^0.0.1",
     "@open-web3/app-util": "beta",
     "@open-web3/util": "beta",
     "apollo-server": "^2.15.0",

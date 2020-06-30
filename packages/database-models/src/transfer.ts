@@ -1,6 +1,7 @@
 import { Model, DataTypes, Sequelize } from 'sequelize';
 
 export class TransferModel extends Model {
+    public hash!: string;
     public from!: string;
     public to!: string;
     public currency!: string;
@@ -13,21 +14,22 @@ export class TransferModel extends Model {
 
 export function initTransferModel (db: Sequelize): Model {
     return TransferModel.init({
-        from: {
+        hash: {
             type: DataTypes.STRING,
-            unique: 'transfer'
+            unique: true,
+            primaryKey: true
+        },
+        from: {
+            type: DataTypes.STRING
         },
         to: {
-            type: DataTypes.STRING,
-            unique: 'transfer'
+            type: DataTypes.STRING
         },
         currency: {
-            type: DataTypes.STRING,
-            unique: 'transfer'
+            type: DataTypes.STRING
         },
         amount: {
-            type: DataTypes.STRING,
-            unique: 'transfer'
+            type: DataTypes.STRING
         },
         createAtBlock: {
             type: DataTypes.BIGINT

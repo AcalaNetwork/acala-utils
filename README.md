@@ -5,8 +5,8 @@
 1. @acala-weaver/graphql-server
     support a query server base on graphQL.
 
-2. @acala-weaver/acala
+2. @acala-weaver/chain-recoder
     sync chain and maintain accounts, cdp and so on.
 
-3. @acala-weaver/storage-monitor
-    sync chain data to a time series database
+3. @acala-weaver/storage-recoder
+    sync chain storage data to a time series database for monitor and alert
