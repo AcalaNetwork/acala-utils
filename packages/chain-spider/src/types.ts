@@ -1,7 +1,10 @@
 import { SubscribeBlock, SubscribeBlockError } from "@open-web3/scanner/types";
+import Scanner from "@open-web3/scanner";
 
 export type Context = {
-  [k in string]: any;
+    scanner: Scanner;
+    gap: number;
+    [k: string]: any;
 };
 
 export type Middleware =

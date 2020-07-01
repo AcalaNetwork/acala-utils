@@ -1,19 +1,27 @@
 import * as Influx from "influx";
 import { Middleware } from "@acala-weaver/chain-spider";
 
-const block: Middleware = async (data, next, context) => {
-    await (context.db as Influx.InfluxDB).writePoints([
-        {
-            measurement: "block",
-            fields: {
-                blockHash: data.hash,
-                author: data.author,
-            },
-            tags: { number: data.number.toString() },
-            timestamp: data.timestamp + '0000',
-        },
-    ]);
-    next();
-};
+export const block: Middleware = async (data, next, context) => {
+    if (data.result) {
+        const { result } = data;
 
-export default block;
+        // insert timestamp to context
+        context.timestamp = Influx.toNanoDate(result.number === 0 ? '000000000000000000000' : result.timestamp + '000000');
+
+        await (context.db as Influx.InfluxDB).writePoints([
+            {
+                measurement: "block",
+                fields: {
+                    blockHash: result.hash,
+                    author: result.author,
+                },
+                tags: {
+                    blockNumber: result.number.toString()
+                },
+                timestamp: context.timestamp
+            },
+        ]);
+    }
+
+    await next();
+};

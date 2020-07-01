@@ -3,23 +3,55 @@ import { ChainSpider, SpiderController } from "@acala-weaver/chain-spider";
 import { ScannerOptions } from "@open-web3/scanner/types";
 
 import schema from './influx-schema';
-import blockMiddleware from './middleware/block';
-import extrinsicMiddleware from './middleware/extrinsic';
+import * as middleware from './middleware';
 
 interface Options extends ScannerOptions {
   host: string;
 }
 
 class Controller implements SpiderController {
-  async getLatestBlock (): Promise<number> {
-    return 0;
+  #db: Influx.InfluxDB;
+
+  constructor (db: Influx.InfluxDB) {
+    this.#db = db;
   }
 
-  async onSyncSuccess (): Promise<boolean> {
+  async getLatestBlock (): Promise<number> {
+    // const result = await this.#db.query('SELECT max("blockNumber") FROM "sync" WHERE "success"=true');
+
+    // if (result.length) {
+    //   return (result as any[])[0].max;
+    // }
+
+    // return 0;
+    return 100000;
+  }
+
+  async onSyncSuccess (blockNumber: number): Promise<boolean> {
+    await this.#db.writePoints([
+      {
+        measurement: 'sync',
+        fields: {
+          blockNumber,
+          success: true
+        },
+        tags: { blockNumber: blockNumber.toString() }
+      },
+    ]);
+
     return true;
   }
 
-  async onSyncFailure(): Promise<boolean> {
+  async onSyncFailure(blockNumber: number): Promise<boolean> {
+    await this.#db.writePoints([
+      {
+        measurement: 'sync',
+        fields: { success: true },
+        tags: { blockNumber: blockNumber.toString() }
+      },
+    ]);
+
+    return true;
     return true;
   }
 }
@@ -38,11 +70,12 @@ export class Recoder {
   #db!: Influx.InfluxDB;
 
   constructor(options: Options) {
+    this.#db = initDB(options.host);
     this.#chainSpider = new ChainSpider({
       ...options,
-      controller: new Controller()
+      controller: new Controller(this.#db),
+      gap: 20 * 60 / 4 // blocks in 20min
     });
-    this.#db = initDB(options.host);
   }
 
   run (): Promise<void> {
@@ -51,8 +84,13 @@ export class Recoder {
       await next();
     });
 
-    this.#chainSpider.use(blockMiddleware);
-    this.#chainSpider.use(extrinsicMiddleware);
+    // ensure that block is the first middlware!
+    this.#chainSpider.use(middleware.block);
+    this.#chainSpider.use(middleware.extrinsic);
+    this.#chainSpider.use(middleware.event);
+
+    this.#chainSpider.use(middleware.price);
+    this.#chainSpider.use(middleware.cdp);
 
     return this.#chainSpider.start();
   }

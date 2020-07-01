@@ -75,15 +75,13 @@ export class Recoder {
 
     // sync middleware should be first!
     this.#chainSpider.use(middleware.sync);
+
     this.#chainSpider.use(middleware.block);
     this.#chainSpider.use(middleware.extrinsic);
-
     this.#chainSpider.use(middleware.account);
     this.#chainSpider.use(middleware.transfer);
-
     this.#chainSpider.use(middleware.price);
     this.#chainSpider.use(middleware.oracle);
-
     this.#chainSpider.use(middleware.loan);
     this.#chainSpider.use(middleware.cdp);
 

@@ -7,7 +7,7 @@
         "baseUrl": "packages",
         "paths": {
             "@acala-weaver/apps": ["apps"],
-            "@acala-weaver/scanner-storage-data": ["scanner-storage-data"],
+            "@acala-weaver/scan-storage-data": ["scan-storage-data"],
             "@acala-weaver/graphql-server": ["graphql-server"],
             "@acala-weaver/database-models": ["database-models"],
             "@acala-weaver/chain-spider": ["chain-spider"],

@@ -26,8 +26,8 @@ run().catch((error) => {
   process.exit(1);
 });
 
-process.on('unhandledRejection', () => {
-  console.log('unhandledRejection');
+process.on('unhandledRejection', (error) => {
+  console.log('unhandledRejection', error);
   process.exit(1);
 });
 

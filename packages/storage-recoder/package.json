@@ -5,7 +5,9 @@
   "license": "Apache-2.0",
   "main": "src/index.ts",
   "dependencies": {
+    "@acala-network/app-util": "beta",
     "@acala-weaver/chain-spider": "^0.0.1",
+    "@acala-weaver/scan-storage-data": "^0.0.1",
     "@open-web3/scanner": "beta",
     "influx": "^5.5.2"
   }

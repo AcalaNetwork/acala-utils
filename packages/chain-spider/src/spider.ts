@@ -19,7 +19,7 @@ export interface ChainSpiderOptions extends ScannerOptions {
 export class ChainSpider {
   #scanner: Scanner; // scanner
   #middlewares: Middleware[]; // middleware list
-  #context!: { [k in string]: any }; // context
+  #context!: Context; // context
   #gap!: number;
   #concurrent!: number;
   #controller: SpiderController;
