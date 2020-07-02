@@ -17,18 +17,18 @@ export const cdp: Middleware = async (data, next, context) => {
         await (context.db as Influx.InfluxDB).writePoints(
             cdps.map((item, index) => {
                 let collateralRatio = Fixed18.ZERO;
-                const collateralAmount = item.totalCollateral.mul(context.prices.get(item.asset));
-                const debitAmount = item.totalDebit.mul(item.debitExchangeRate);
+                const collateralValue = item.totalCollateral.mul(context.prices.get(item.asset));
+                const debitlValue = item.totalDebit.mul(item.debitExchangeRate);
                 if (context.prices) {
-                    collateralRatio = collateralAmount.div(debitAmount);
+                    collateralRatio = collateralValue.div(debitlValue);
                 }
                 return {
                     measurement: 'cdp',
                     fields: {
                         totalDebit: item.totalDebit.toNumber(18, 3) || 0,
                         totalCollateral: item.totalCollateral.toNumber(18, 3) || 0,
-                        collateralAmount: collateralAmount.toNumber(18, 3) || 0,
-                        debitAmount: debitAmount.toNumber(18, 3) || 0,
+                        collateralValue: collateralValue.toNumber(18, 3) || 0,
+                        debitlValue: debitlValue.toNumber(18, 3) || 0,
                         collateralRatio: collateralRatio.toNumber(18, 3) || 0,
                         debitExchangeRate: item.debitExchangeRate.toNumber(18, 3) || 0,
                         maximumTotalDebitValue: item.maximumTotalDebitValue.toNumber(18, 3) || 0,

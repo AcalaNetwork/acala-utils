@@ -1,16 +1,14 @@
 import { Sequelize, DataTypes, Model } from 'sequelize';
 
-export class LoanModel extends Model {
+export class DexShareHolderModel extends Model {
     public id!: string;
     public asset!: string;
     public address!: string;
 
-    public debit!: number;
-    public collateral!: number;
+    public share!: number;
+    public totalShare!: number;
 
-    public debitlValue!: number;
-    public collateralValue!: number;
-    public collateralRatio!: number;
+    public shareValue!: number; // primary asset + base asset
 
     public updateAtBlock!: number;
     public createAtBlock!: number;
@@ -18,8 +16,8 @@ export class LoanModel extends Model {
     public createAt!: number;
 }
 
-export function initLoanModel (db: Sequelize): Model {
-    return LoanModel.init({
+export function initDexShareHolderModel (db: Sequelize): Model {
+    return DexShareHolderModel.init({
         id: {
             type: DataTypes.STRING,
             primaryKey: true,
@@ -34,20 +32,14 @@ export function initLoanModel (db: Sequelize): Model {
             allowNull: false
         },
 
-        debit: {
-            type: DataTypes.FLOAT,
+        share: {
+            type: DataTypes.INET,
         },
-        collateral: {
-            type: DataTypes.FLOAT,
+        totalShare: {
+            type: DataTypes.INET,
         },
 
-        debitlValue: {
-            type: DataTypes.FLOAT,
-        },
-        collateralValue: {
-            type: DataTypes.FLOAT,
-        },
-        collateralRatio: {
+        shareValue: {
             type: DataTypes.FLOAT,
         },
 
@@ -65,7 +57,7 @@ export function initLoanModel (db: Sequelize): Model {
         },
     }, {
         sequelize: db,
-        tableName: 'loan',
+        tableName: 'dex-shareholder',
         timestamps: false,
         indexes: [
             { unique: false, fields: ['asset', 'address'] }

@@ -1,22 +1,26 @@
 import { Sequelize, DataTypes, Model } from 'sequelize';
 
 export class AccountModel extends Model {
-    public 'account': string;
-    public 'createAtBlock': number;
-    public 'createAt': Date;
+    public account!: string;
+    public createAtBlock!: number;
+    public createAtBlockHahs!: string;
+    public createAt!: Date;
 }
 
 export function initAccountModel (db: Sequelize): Model {
     return AccountModel.init({
-        'account': {
+        account: {
             type: DataTypes.STRING,
             primaryKey: true,
             unique: true
         },
-        'createAtBlcok': {
+        createAtBlcok: {
             type: DataTypes.INTEGER
         },
-        'createAt': {
+        createAtBlcokHash: {
+            type: DataTypes.STRING
+        },
+        createAt: {
             type: DataTypes.DATE
         }
     }, {

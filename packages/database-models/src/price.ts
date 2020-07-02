@@ -2,7 +2,7 @@ import { Model, DataTypes, Sequelize } from 'sequelize';
 
 export class PriceModel extends Model {
     public id!: string;
-    public currency!: string;
+    public asset!: string;
     public amount!: string;
     public createAtBlock!: number;
     public createAtBlockHash!: string;
@@ -16,7 +16,7 @@ export function initPriceModel (db: Sequelize): Model {
             primaryKey: true,
             unique: true
         },
-        currency: {
+        asset: {
             type: DataTypes.STRING,
         },
         amount: {
@@ -34,6 +34,11 @@ export function initPriceModel (db: Sequelize): Model {
     }, {
         sequelize: db,
         tableName: 'price',
-        timestamps: false
+        timestamps: false,
+        indexes: [
+            { unique: false, fields: ['createAtBlock'] },
+            { unique: false, fields: ['createAtBlockHash'] },
+            { unique: false, fields: ['asset'] },
+        ]
     });
 }

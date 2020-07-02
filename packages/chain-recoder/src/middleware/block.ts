@@ -14,5 +14,6 @@ export const block: Middleware = async (data, next, context) => {
             raw: block.raw
         }, { transaction: context.transaction });
     }
+
     await next();
 }

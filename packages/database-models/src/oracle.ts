@@ -2,11 +2,14 @@ import { Model, DataTypes, Sequelize } from 'sequelize';
 
 export class OracleModel extends Model {
     public id!: string;
-    public index!: number;
-    public account!: string;
-    public currency!: string;
+
+    public eventIndex!: number;
+    public address!: string;
+    public asset!: string;
     public amount!: string;
+
     public createAtBlock!: number;
+    public createAtBlockHash!: string;
     public createAt!: number;
 }
 
@@ -17,20 +20,24 @@ export function initOracleModel (db: Sequelize): Model {
             unique: true,
             primaryKey: true
         },
-        index: {
+        eventIndex: {
             type: DataTypes.INTEGER
         },
-        account: {
+        address: {
             type: DataTypes.STRING,
         },
-        currency: {
+        asset: {
             type: DataTypes.STRING,
         },
         amount: {
             type: DataTypes.STRING,
         },
+
         createAtBlock: {
             type: DataTypes.BIGINT
+        },
+        createAtBlockHash: {
+            type: DataTypes.STRING
         },
         createAt: {
             type: DataTypes.DATE
@@ -38,6 +45,11 @@ export function initOracleModel (db: Sequelize): Model {
     }, {
         sequelize: db,
         tableName: 'oracle',
-        timestamps: false
+        timestamps: false,
+        indexes: [
+            { unique: false, fields: ['createAtBlock'] },
+            { unique: false, fields: ['createAtBlockHash'] },
+            { unique: false, fields: ['asset', 'address'] }
+        ]
     });
 }

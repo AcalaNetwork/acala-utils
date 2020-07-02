@@ -11,6 +11,7 @@ export const account: Middleware = async (data, next, context) => {
                 return {
                     account: event.args[0],
                     createAtBlock: block.number,
+                    createAtBlockHash: block.hash,
                     createAt: block.timestamp
                 };
             });

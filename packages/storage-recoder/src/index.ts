@@ -17,14 +17,13 @@ class Controller implements SpiderController {
   }
 
   async getLatestBlock (): Promise<number> {
-    // const result = await this.#db.query('SELECT max("blockNumber") FROM "sync" WHERE "success"=true');
+    const result = await this.#db.query('SELECT max("blockNumber") FROM "sync" WHERE "success"=true');
 
-    // if (result.length) {
-    //   return (result as any[])[0].max;
-    // }
+    if (result.length) {
+      return (result as any[])[0].max;
+    }
 
-    // return 0;
-    return 100000;
+    return 0;
   }
 
   async onSyncSuccess (blockNumber: number): Promise<boolean> {

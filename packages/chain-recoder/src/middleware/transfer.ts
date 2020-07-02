@@ -14,9 +14,10 @@ export const transfer: Middleware = async (data, next, context) => {
                     hash: extrinsic.hash,
                     from: extrinsic.signer,
                     to: args['dest'],
-                    currency: args['currency_id'],
+                    asset: args['currency_id'],
                     amount: args['amount'],
                     result: extrinsic.result,
+
                     createAtBlock: block.number,
                     createAtBlockHash: block.hash,
                     createAt: block.timestamp

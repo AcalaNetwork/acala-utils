@@ -1,30 +1,27 @@
 import { Model, DataTypes, Sequelize } from 'sequelize';
 
-export class ExtrinsicModel extends Model {
+export class EventModel extends Model {
+    public id!: string;
     public index!: number;
-    public signer!: string;
-    public signature!: string;
-    public hash!: string;
     public section!: string;
     public method!: string;
     public args!: unknown[];
-    public result!: string;
+    public phaseType!: string;
+    public phaseIndex!: string;
+
     public createAtBlock!: number;
     public createAtBlockHash!: string;
     public createAt!: Date;
 }
 
-export function initExtrinsicModel (db: Sequelize): Model {
-    return ExtrinsicModel.init({
-        index: {
-            type: DataTypes.INTEGER,
-        },
-        signer: {
-            type: DataTypes.STRING,
-        },
-        hash: {
+export function initEventModel (db: Sequelize): Model {
+    return EventModel.init({
+        id: {
             type: DataTypes.STRING,
             primaryKey: true
+        },
+        index: {
+            type: DataTypes.INTEGER,
         },
         section: {
             type: DataTypes.STRING,
@@ -35,27 +32,31 @@ export function initExtrinsicModel (db: Sequelize): Model {
         args: {
             type: DataTypes.JSONB
         },
-        bytes: {
-            type: DataTypes.BLOB
+        phaseType: {
+            type: DataTypes.STRING
+        },
+        phaseIndex: {
+            type: DataTypes.STRING
         },
 
-        createAtBlock: {
-            type: DataTypes.BIGINT,
-        },
         createAtBlockHash: {
             type: DataTypes.STRING,
         },
+        createAtBlock: {
+            type: DataTypes.BIGINT,
+        },
         createAt: {
-            type: DataTypes.DATE
+            type: DataTypes.DATE,
         }
     }, {
         sequelize: db,
-        tableName: 'extrinsic',
+        tableName: 'event',
         timestamps: false,
         indexes: [
-            { unique: true, fields: ['hash'] },
+            { unique: false, fields: ['createAtBlock'] },
             { unique: false, fields: ['createAtBlockHash'] },
-            { unique: false, fields: ['createAtBlock'] }
+            { unique: false, fields: ['section'] },
+            { unique: false, fields: ['method'] }
         ]
     });
 }

@@ -58,8 +58,8 @@ const schema: Influx.ISchemaOptions[] = [
         fields: {
             totalDebit: Influx.FieldType.FLOAT,
             totalCollateral: Influx.FieldType.FLOAT,
-            collateralAmount: Influx.FieldType.FLOAT,
-            debitAmount: Influx.FieldType.FLOAT,
+            collateralValue: Influx.FieldType.FLOAT,
+            debitlValue: Influx.FieldType.FLOAT,
             collateralRatio: Influx.FieldType.FLOAT,
             debitExchangeRate: Influx.FieldType.FLOAT,
             maximumTotalDebitValue: Influx.FieldType.FLOAT,

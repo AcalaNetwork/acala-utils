@@ -4,7 +4,7 @@ export class TransferModel extends Model {
     public hash!: string;
     public from!: string;
     public to!: string;
-    public currency!: string;
+    public asset!: string;
     public amount!: string;
     public result!: string;
     public createAtBlock!: number;
@@ -25,10 +25,13 @@ export function initTransferModel (db: Sequelize): Model {
         to: {
             type: DataTypes.STRING
         },
-        currency: {
+        asset: {
             type: DataTypes.STRING
         },
         amount: {
+            type: DataTypes.STRING
+        },
+        result: {
             type: DataTypes.STRING
         },
         createAtBlock: {
@@ -43,6 +46,11 @@ export function initTransferModel (db: Sequelize): Model {
     }, {
         sequelize: db,
         tableName: 'transfer',
-        timestamps: false
+        timestamps: false,
+        indexes: [
+            { unique: false, fields: ['from'] },
+            { unique: false, fields: ['to'] },
+            { unique: false, fields: ['asset'] },
+        ]
     });
 }

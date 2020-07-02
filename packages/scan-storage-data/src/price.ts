@@ -14,6 +14,7 @@ import Scanner from '@open-web3/scanner';
  */
 export async function getAssetPrice(asset: string, block: Block, scanner: Scanner): Promise<Fixed18> {
   const { metadata, registry } = block.chainInfo;
+  const blockAt = { blockNumber: block.number, blockHash: block.hash };
 
   // get aca price
   if (asset === 'ACA') {
@@ -39,12 +40,12 @@ export async function getAssetPrice(asset: string, block: Block, scanner: Scanne
       free,
       unbondingToFree,
     ] = await Promise.all([
-      scanner.getStorageValue<TimestampedValue>(dotPriceKey, { blockNumber: block.number }),
-      scanner.getStorageValue<Balance>(liquidTokenIssuanceKey, { blockNumber: block.number }),
-      scanner.getStorageValue<Balance>(totalBondedKey, { blockNumber: block.number, }),
-      scanner.getStorageValue<[Balance, Balance]>(nextEraUnbondKey, { blockNumber: block.number }),
-      scanner.getStorageValue<Balance>(freeKey, { blockNumber: block.number, }),
-      scanner.getStorageValue<Balance>(unbondingToFreeKey, { blockNumber: block.number }),
+      scanner.getStorageValue<TimestampedValue>(dotPriceKey, blockAt),
+      scanner.getStorageValue<Balance>(liquidTokenIssuanceKey, blockAt),
+      scanner.getStorageValue<Balance>(totalBondedKey, blockAt),
+      scanner.getStorageValue<[Balance, Balance]>(nextEraUnbondKey, blockAt),
+      scanner.getStorageValue<Balance>(freeKey, blockAt),
+      scanner.getStorageValue<Balance>(unbondingToFreeKey, blockAt),
     ]);
 
     const communalBonded = calcCommunalBonded(convertToFixed18(totalBonded), convertToFixed18(nextEraUnbond[1]));
@@ -63,7 +64,7 @@ export async function getAssetPrice(asset: string, block: Block, scanner: Scanne
       metadata.query.oracle.values,
       asset,
   ]);
-  const result = await scanner.getStorageValue<TimestampedValue>(storageKey, { blockNumber: block.number });
+  const result = await scanner.getStorageValue<TimestampedValue>(storageKey, blockAt);
 
   return result.isEmpty ? Fixed18.ZERO : convertToFixed18(result.value);
 }

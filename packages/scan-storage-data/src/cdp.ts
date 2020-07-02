@@ -1,10 +1,8 @@
-
 import { Block } from '@open-web3/scanner/types';
+import Scanner from '@open-web3/scanner';
 import { StorageKey } from '@polkadot/types';
 import { OptionRatio, OptionRate, Balance } from '@acala-network/types/interfaces';
-import {  Fixed18, convertToFixed18, calcStableFeeAPR } from '@acala-network/app-util';
-
-import Scanner from '@open-web3/scanner';
+import { Fixed18, convertToFixed18, calcStableFeeAPR } from '@acala-network/app-util';
 
 interface CollateralParams {
     maximumTotalDebitValue: Balance;
@@ -12,7 +10,7 @@ interface CollateralParams {
     liquidationRatio: OptionRatio;
     liquidationPenalty: OptionRate;
     requiredCollateralRatio: OptionRatio;
-  }
+}
 
 interface CDPData {
     asset: string;
@@ -33,9 +31,10 @@ interface CDPData {
  * @description get cdp total debit/collateral/config
  * @param asset 
  * @param block 
- */
-export async function getCDP(asset: string, block: Block, scanner: Scanner): Promise<CDPData> {
+ */ export async function getCDP(asset: string, block: Block, scanner: Scanner): Promise<CDPData> {
     const { metadata, registry } = block.chainInfo;
+    const blockAt = { blockNumber: block.number, blockHash: block.hash };
+
     const totalDebitStorageKey = new StorageKey(registry, [metadata.query.loans.totalDebits, asset]);
     const totalCollateralStorageKey = new StorageKey(registry, [metadata.query.loans.totalCollaterals, asset]);
     const debitExchangeRateStorageKey = new StorageKey(registry, [metadata.query.cdpEngine.debitExchangeRate, asset]);
@@ -43,11 +42,11 @@ export async function getCDP(asset: string, block: Block, scanner: Scanner): Pro
     const collateralParamsStorageKey = new StorageKey(registry, [metadata.query.cdpEngine.collateralParams, asset]);
     const constants = metadata.consts.cdpEngine;
     const [totalDebit, totalCollateral, debitExchangeRate, globalStabilityFee, collateralParams] = await Promise.all([
-        scanner.getStorageValue<Balance>(totalDebitStorageKey, { blockNumber: block.number }),
-        scanner.getStorageValue<Balance>(totalCollateralStorageKey, { blockNumber: block.number }),
-        scanner.getStorageValue<Balance>(debitExchangeRateStorageKey, { blockNumber: block.number }),
-        scanner.getStorageValue<Balance>(globalStabilityFeeStorageKey, { blockNumber: block.number }),
-        scanner.getStorageValue<CollateralParams>(collateralParamsStorageKey, { blockNumber: block.number }),
+        scanner.getStorageValue<Balance>(totalDebitStorageKey, blockAt),
+        scanner.getStorageValue<Balance>(totalCollateralStorageKey, blockAt),
+        scanner.getStorageValue<Balance>(debitExchangeRateStorageKey, blockAt),
+        scanner.getStorageValue<Balance>(globalStabilityFeeStorageKey, blockAt),
+        scanner.getStorageValue<CollateralParams>(collateralParamsStorageKey, blockAt),
     ]);
 
     const stableFee = convertToFixed18(collateralParams.stabilityFee).add(convertToFixed18(globalStabilityFee));
@@ -65,5 +64,33 @@ export async function getCDP(asset: string, block: Block, scanner: Scanner): Pro
         maximumTotalDebitValue: convertToFixed18(collateralParams.maximumTotalDebitValue),
         minimumDebitValue: convertToFixed18(constants.minimumDebitValue),
         stableFeeAPR: calcStableFeeAPR(stableFee, expectedBlockTime)
+    };
+}
+
+interface LoanData {
+    debit: Fixed18;
+    collateral: Fixed18;
+}
+
+/**
+ * @name getLoan
+ * @param block 
+ * @param currency 
+ * @param account 
+ */
+export async function getLoanInfo(asset: string, account: string, block: Block, scanner: Scanner): Promise<LoanData> {
+    const { metadata, registry } = block.chainInfo;
+    const blockAt = { blockNumber: block.number, blockHash: block.hash };
+
+    const debitStorageKey = new StorageKey(registry, [metadata.query.loans.debits, [asset, account]]);
+    const collateralStorageKey = new StorageKey(registry, [metadata.query.loans.collaterals, [account, asset]]);
+    const [debit, collateral] = await Promise.all([
+        scanner.getStorageValue<Balance>(debitStorageKey, blockAt),
+        scanner.getStorageValue<Balance>(collateralStorageKey, blockAt)
+    ]);
+
+    return {
+        debit: convertToFixed18(debit),
+        collateral: convertToFixed18(collateral)
     };
 }

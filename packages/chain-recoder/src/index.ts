@@ -4,6 +4,7 @@ import { ScannerOptions } from "@open-web3/scanner/types";
 import * as models from "@acala-weaver/database-models";
 import { SyncModel } from "@acala-weaver/database-models";
 import * as middleware from './middleware';
+import * as jobs from './jobs';
 
 interface Options extends ScannerOptions {
   db: Sequelize;
@@ -50,13 +51,10 @@ export class Recoder {
     models.initSyncModel(this.#db);
     models.initBlockModel(this.#db);
     models.initExtrinsicModel(this.#db);
+    models.initEventModel(this.#db);
 
     // loans
-    models.initCdpModel(this.#db);
-
-    // prices
-    models.initOracleModel(this.#db);
-    models.initPriceModel(this.#db);
+    models.initLoanModel(this.#db);
 
     // accounts
     models.initAccountModel(this.#db);
@@ -76,15 +74,16 @@ export class Recoder {
     // sync middleware should be first!
     this.#chainSpider.use(middleware.sync);
 
+    // base chain data
     this.#chainSpider.use(middleware.block);
     this.#chainSpider.use(middleware.extrinsic);
+    this.#chainSpider.use(middleware.event);
+
     this.#chainSpider.use(middleware.account);
     this.#chainSpider.use(middleware.transfer);
-    this.#chainSpider.use(middleware.price);
-    this.#chainSpider.use(middleware.oracle);
     this.#chainSpider.use(middleware.loan);
-    this.#chainSpider.use(middleware.cdp);
 
+    this.#chainSpider.addJob('*/1 * * * *', jobs.updateLoanInformation);
 
     return this.#chainSpider.start();
   }
