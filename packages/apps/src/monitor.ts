@@ -9,7 +9,7 @@ import { Recoder } from '@acala-weaver/storage-recoder';
 dotenv.config();
 
 async function run (): Promise<void> {
-  const wsUrl = process.env.WS_URL || 'wss://testnet-node-1.acala.laminar.one/ws';
+  const wsUrl = process.env.ACALA_WS_URL || 'wss://testnet-node-1.acala.laminar.one/ws';
   const host = process.env.INFLUX_DB_HOST;
 
   assert(host, 'influxed db host should not be empty !');

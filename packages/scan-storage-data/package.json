@@ -7,7 +7,9 @@
   "license": "Apache-2.0",
   "main": "src/index.ts",
   "dependencies": {
+    "@acala-network/app-util": "beta",
     "@open-web3/scanner": "beta",
-    "@acala-network/app-util": "beta"
+    "@types/lodash": "^4.14.157",
+    "lodash": "^4.17.19"
   }
 }

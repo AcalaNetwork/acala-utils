@@ -6,6 +6,7 @@ import { Logger } from "@open-web3/util/logger";
 
 export async function updateLoanInformation (scanner: Scanner, logger: Logger): Promise<void> {
     logger.info('jobs updateLoanInformation start');
+
     const block = await scanner.getBlockDetail();
     const assets = block.chainInfo.registry.createType('CurrencyId').defKeys;
 
@@ -19,7 +20,7 @@ export async function updateLoanInformation (scanner: Scanner, logger: Logger): 
 
     const loans = await LoanModel.findAll();
 
-    const process = async (model: LoanModel): Promise<any> => {
+    const process = async (model: LoanModel): Promise<void> => {
         const cdp = await getCDP(model.asset, block, scanner);
         const loanInfo = await getLoanInfo(model.asset, model.address, block, scanner);
 

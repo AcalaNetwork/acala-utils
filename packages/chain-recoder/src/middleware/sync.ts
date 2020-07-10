@@ -18,9 +18,5 @@ export const sync: Middleware = async (data, next, context) => {
         console.log(error);
         await SyncModel.upsert({ 'blockNumber': data.blockNumber, 'status': false });
         await transaction.rollback();
-
-        throw error;
-        // FIXME: error don't be catched by upper promise
-        process.exit(1);
     }
 }

@@ -78,6 +78,8 @@ export class Recoder {
   }
 
   run (): Promise<void> {
+
+    // set db to context
     this.#chainSpider.use(async (data, next, context) => {
       context.db = this.#db;
       await next();
@@ -90,6 +92,9 @@ export class Recoder {
 
     this.#chainSpider.use(middleware.price);
     this.#chainSpider.use(middleware.cdp);
+    this.#chainSpider.use(middleware.collateralAuction);
+    this.#chainSpider.use(middleware.debitAuction);
+    this.#chainSpider.use(middleware.surplusAuction);
 
     return this.#chainSpider.start();
   }

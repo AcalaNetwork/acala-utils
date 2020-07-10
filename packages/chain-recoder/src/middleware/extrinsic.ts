@@ -1,5 +1,5 @@
 import { ExtrinsicModel } from '@acala-weaver/database-models';
-import { Middleware } from 'chain-spider/src';
+import { Middleware } from '@acala-weaver/chain-spider';
 
 export const extrinsic: Middleware = async (data, next, context) => {
     if (data.result) {

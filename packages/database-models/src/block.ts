@@ -18,23 +18,18 @@ export function initBlockModel(db: Sequelize): Model {
         },
         blockNumber: {
             type: DataTypes.BIGINT,
-            allowNull: false
         },
         timestamp: {
             type: DataTypes.BIGINT,
-            allowNull: true
         },
         parentHash: {
             type: DataTypes.STRING,
-            allowNull: false
         },
         author: {
             type: DataTypes.STRING,
-            allowNull: true
         },
         raw: {
             type: DataTypes.JSONB,
-            allowNull: false
         }
     }, {
         sequelize: db,

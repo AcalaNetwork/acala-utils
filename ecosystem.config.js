@@ -8,6 +8,11 @@ module.exports = {
     {
       name: 'chain recoder',
       script: './node_modules/.bin/ts-node',
+      args: './packages/apps/src/monitor.ts'
+    },
+    {
+      name: 'storage recoder',
+      script: './node_modules/.bin/ts-node',
       args: './packages/apps/src/chain.ts'
     },
     {

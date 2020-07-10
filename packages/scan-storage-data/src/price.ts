@@ -21,7 +21,9 @@ export async function getAssetPrice(asset: string, block: Block, scanner: Scanne
     const liquidityPoolKey = new StorageKey(registry, [metadata.query.dex.liquidityPool, asset]);
     const liquidityPool = await scanner.getStorageValue<Vec<Balance>>(liquidityPoolKey, { blockNumber: block.number });
 
-    return liquidityPool.isEmpty ? Fixed18.ZERO : convertToFixed18(liquidityPool[0]).div(convertToFixed18(liquidityPool[1]));
+    const result = convertToFixed18(liquidityPool[0]).div(convertToFixed18(liquidityPool[1]));
+
+    return result.isNaN() ? Fixed18.ZERO : result;
   }
 
   // get ldot price

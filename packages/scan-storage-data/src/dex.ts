@@ -1,8 +1,8 @@
 import { Block } from '@open-web3/scanner/types';
 import Scanner from '@open-web3/scanner';
 import { StorageKey } from '@polkadot/types';
-import { OptionRatio, OptionRate, Balance } from '@acala-network/types/interfaces';
-import { Fixed18, convertToFixed18, calcStableFeeAPR } from '@acala-network/app-util';
+import { Balance } from '@acala-network/types/interfaces';
+import { Fixed18, convertToFixed18 } from '@acala-network/app-util';
 import { getAssetPrice } from './price';
 
 interface DexShareHolderInfo {

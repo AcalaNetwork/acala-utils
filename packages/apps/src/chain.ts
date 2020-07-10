@@ -10,8 +10,8 @@ import { Recoder } from '@acala-weaver/chain-recoder';
 dotenv.config();
 
 async function run (): Promise<void> {
-  const dbUrl = process.env.DB_URI || '';
-  const wsUrl = process.env.WS_URL || '';
+  const dbUrl = process.env.CHAIN_RECORD_DB_URI || '';
+  const wsUrl = process.env.ACALA_WS_URL || '';
 
   assert(wsUrl, 'ensure that wsUrl is not empty!');
   assert(dbUrl, 'ensure that dbUrl is not empty!');

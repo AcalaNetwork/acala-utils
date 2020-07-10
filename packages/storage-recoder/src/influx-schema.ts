@@ -7,7 +7,7 @@ const schema: Influx.ISchemaOptions[] = [
             blockNumber: Influx.FieldType.INTEGER,
             success: Influx.FieldType.BOOLEAN
         },
-        tags: [ 'blockNumber' ]
+        tags: ['blockNumber']
     },
     {
         measurement: 'block',
@@ -15,7 +15,7 @@ const schema: Influx.ISchemaOptions[] = [
             blockHash: Influx.FieldType.STRING,
             author: Influx.FieldType.STRING
         },
-        tags: [ 'blockNumber' ],
+        tags: ['blockNumber'],
     },
     {
         measurement: 'extrinsic',
@@ -28,7 +28,7 @@ const schema: Influx.ISchemaOptions[] = [
             nonce: Influx.FieldType.STRING,
             result: Influx.FieldType.STRING
         },
-        tags: [ 'blockNumber', 'hash' ]
+        tags: ['blockNumber', 'hash']
     },
     {
         measurement: 'event',
@@ -44,14 +44,14 @@ const schema: Influx.ISchemaOptions[] = [
             args6: Influx.FieldType.STRING,
             args: Influx.FieldType.STRING
         },
-        tags: [ 'blockNumber', 'index' ]
+        tags: ['blockNumber', 'index']
     },
     {
         measurement: 'price',
         fields: {
             price: Influx.FieldType.FLOAT
         },
-        tags: [ 'blockNumber', 'asset' ]
+        tags: ['blockNumber', 'asset']
     },
     {
         measurement: 'cdp',
@@ -70,7 +70,33 @@ const schema: Influx.ISchemaOptions[] = [
             requiredCollateralRatio: Influx.FieldType.FLOAT,
             stableFeeAPR: Influx.FieldType.FLOAT
         },
-        tags: [ 'blockNumber', 'asset' ]
+        tags: ['blockNumber', 'asset']
+    },
+    {
+        measurement: 'collateral-auction',
+        fields: {
+            totalCollateral: Influx.FieldType.FLOAT,
+            totalCollateralValue: Influx.FieldType.FLOAT
+        },
+        tags: ['blockNumber', 'asset']
+    },
+    {
+        measurement: 'debit-auction',
+        fields: {
+            totalDebit: Influx.FieldType.FLOAT,
+            totalDebitValue: Influx.FieldType.FLOAT,
+            totalTarget: Influx.FieldType.FLOAT,
+            totalTargetValue: Influx.FieldType.FLOAT
+        },
+        tags: ['blockNumber']
+    },
+    {
+        measurement: 'surplus-auction',
+        fields: {
+            totalSurplus: Influx.FieldType.FLOAT,
+            totalSurplusValue: Influx.FieldType.FLOAT,
+        },
+        tags: ['blockNumber']
     }
 ];
 

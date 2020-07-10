@@ -31,7 +31,6 @@ export function initDexShareHolderModel (db: Sequelize): Model {
             type: DataTypes.STRING,
             allowNull: false
         },
-
         share: {
             type: DataTypes.INET,
         },

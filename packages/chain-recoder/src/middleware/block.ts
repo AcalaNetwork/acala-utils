@@ -1,5 +1,5 @@
 import { BlockModel } from '@acala-weaver/database-models';
-import { Middleware } from 'chain-spider/src';
+import { Middleware } from '@acala-weaver/chain-spider';
 
 export const block: Middleware = async (data, next, context) => {
     if (data.result) {
@@ -12,7 +12,9 @@ export const block: Middleware = async (data, next, context) => {
             parentHash: block.raw.block.header.parentHash,
             author: block.author,
             raw: block.raw
-        }, { transaction: context.transaction });
+        }, {
+            transaction: context.transaction
+        });
     }
 
     await next();

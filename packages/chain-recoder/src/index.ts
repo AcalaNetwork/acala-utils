@@ -59,6 +59,9 @@ export class Recoder {
     // accounts
     models.initAccountModel(this.#db);
     models.initTransferModel(this.#db);
+
+    // auction
+    models.initAuctionModel(this.#db);
   }
 
   async run(): Promise<void> {
@@ -82,8 +85,10 @@ export class Recoder {
     this.#chainSpider.use(middleware.account);
     this.#chainSpider.use(middleware.transfer);
     this.#chainSpider.use(middleware.loan);
+    this.#chainSpider.use(middleware.auction);
 
-    this.#chainSpider.addJob('*/1 * * * *', jobs.updateLoanInformation);
+    // update loan information every 4 hour
+    this.#chainSpider.addJob('*/4 * * *', jobs.updateLoanInformation);
 
     return this.#chainSpider.start();
   }
