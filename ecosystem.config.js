@@ -11,9 +11,14 @@ module.exports = {
       args: './packages/apps/src/chain.ts'
     },
     {
-      name: 'storage recoder',
+      name: 'ausd mover acala',
       script: './node_modules/.bin/ts-node',
-      args: './packages/apps/src/monitor.ts'
+      args: './packages/apps/src/ausd-acala.ts'
+    },
+    {
+      name: 'ausd mover laminar',
+      script: './node_modules/.bin/ts-node',
+      args: './packages/apps/src/ausd-laminar.ts'
     }
   ]
 };

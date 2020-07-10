@@ -12,7 +12,8 @@
             "@acala-weaver/database-models": ["database-models"],
             "@acala-weaver/chain-spider": ["chain-spider"],
             "@acala-weaver/storage-recoder": ["storage-recoder"],
-            "@acala-weaver/chain-recoder": ["chain-recoder"]
+            "@acala-weaver/chain-recoder": ["chain-recoder"],
+            "@acala-weaver/ausd-mover": ["ausd-mover"]
         }
     },
 }

@@ -1,3 +1,5 @@
+import { scheduleJob } from 'node-schedule';
+
 import Scanner from "@open-web3/scanner";
 import {
     SubscribeBlock,
@@ -5,18 +7,15 @@ import {
     ScannerOptions,
 } from "@open-web3/scanner/types";
 import { defaultLogger } from "@open-web3/util";
-import { scheduleJob } from 'node-schedule';
 
 import { Middleware, Context, SpiderController, Rule, Job } from "./types";
-
-type JobParameters = Parameters<typeof scheduleJob>;
-
-const logger = defaultLogger.createLogger("chain-spider");
+import { Logger } from '@open-web3/util/logger';
 
 export interface ChainSpiderOptions extends ScannerOptions {
     controller: SpiderController;
     gap?: number;
     coucount?: number;
+    loggerName?: string;
 }
 
 export class ChainSpider {
@@ -27,6 +26,7 @@ export class ChainSpider {
     #concurrent!: number;
     #controller: SpiderController;
     #jobs: [Rule, Job][];
+    #logger: Logger;
 
     constructor(options: ChainSpiderOptions) {
         this.#scanner = new Scanner(options);
@@ -34,6 +34,7 @@ export class ChainSpider {
         this.#concurrent = options.coucount || 100;
         this.#controller = options.controller;
         this.#jobs = [];
+        this.#logger = defaultLogger.createLogger(options.loggerName || 'chain-spider');
 
         // initialize context
         this.#context = {
@@ -43,11 +44,11 @@ export class ChainSpider {
 
         // throw wsProvider error
         this.#scanner.wsProvider.on("disconnected", (error) => {
-            logger.error(error);
+            this.#logger.error(error);
             throw error;
         });
         this.#scanner.wsProvider.on("error", (error) => {
-            logger.error(error);
+            this.#logger.error(error);
             throw error;
         });
 
@@ -70,18 +71,36 @@ export class ChainSpider {
     }
 
     private composeMiddleware(data: SubscribeBlock | SubscribeBlockError) {
-        return this.#middlewares.reduceRight(
-            (pre: () => Promise<unknown>, cur: Middleware) => this.createNext(data, cur, pre, this.#context),
-            () => Promise.resolve()
-        );
+        const context  = { ...this.#context };
+
+        return () => {
+            let index = -1;
+            const dispatch  = (i: number): Promise<unknown> => {
+                index = i;
+
+                const fn = this.#middlewares[index];
+
+                if (index === this.#middlewares.length) return Promise.resolve();
+
+                if (!fn) return Promise.resolve();
+
+                try {
+                    return Promise.resolve(fn(data, dispatch.bind(null, i + 1), context))
+                } catch (error) {
+                    return Promise.reject(error);
+                }
+            };
+
+            return dispatch(0);
+        };
     }
 
     async start(): Promise<void> {
-        logger.info("prepare spider");
+        this.#logger.info("prepare spider");
         await this.#scanner.wsProvider.connect();
 
         const startBlockNum = await this.#controller.getLatestBlock();
-        logger.info(`start at#${startBlockNum}`);
+        this.#logger.info(`start at#${startBlockNum}`);
 
         this.#scanner
             .subscribe({ start: startBlockNum, concurrent: this.#concurrent })
@@ -92,9 +111,7 @@ export class ChainSpider {
 
         // exclude jobs
         this.#jobs.forEach((config) => {
-            scheduleJob(config[0], () => {
-                config[1](this.#scanner, logger);
-            });
+            scheduleJob(config[0], () => config[1](this.#scanner, this.#logger));
         });
     }
 
@@ -105,22 +122,23 @@ export class ChainSpider {
     async onResult(detail: SubscribeBlock | SubscribeBlockError): Promise<void> {
         try {
             await this.composeMiddleware(detail)();
+
             if (detail.result) {
                 await this.#controller.onSyncSuccess(detail.blockNumber);
-                logger.info(`process #${detail.blockNumber} sucess`);
+                this.#logger.info(`process #${detail.blockNumber} sucess`);
             } else {
                 await this.#controller.onSyncFailure(detail.blockNumber);
-                logger.error(`process #${detail.blockNumber} failed`);
+                this.#logger.error(`process #${detail.blockNumber} failed`);
             }
         } catch (error) {
-            logger.error(error);
+            this.#logger.error(error);
 
             throw error;
         }
     }
 
     onError(error: Error): void {
-        logger.error(error);
+        this.#logger.error(error);
         throw error;
     }
 }

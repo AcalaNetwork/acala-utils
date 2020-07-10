@@ -14,6 +14,7 @@
     "graphql:acala": "ts-node ./packages/apps/src/graphql.ts",
     "chain:acala": "ts-node ./packages/apps/src/chain.ts",
     "monitor:acala": "ts-node ./packages/apps/src/monitor.ts",
+    "mover:ausd": "ts-node ./packages/apps/src/ausd.ts",
     "lint": "eslint --ext .ts"
   },
   "dependencies": {

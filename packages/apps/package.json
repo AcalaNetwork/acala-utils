@@ -6,6 +6,7 @@
   "dependencies": {
     "@acala-weaver/graphql-server": "^0.0.1",
     "@acala-weaver/storage-recoder": "^0.0.1",
-    "@acala-weaver/chain-recoder": "^0.0.1"
+    "@acala-weaver/chain-recoder": "^0.0.1",
+    "@acala-weaver/ausd-mover": "^0.0.1"
   }
 }
