@@ -30,4 +30,9 @@ export interface EventData {
 
 export type WithNull<T>  = T | null;
 
-export type UseCache = boolean;
+export interface BlockResult {
+  blockNumber: number;
+  block: WithNull<BlockData>;
+  events: EventData[];
+  extrinsics: ExtrinsicData[];
+}

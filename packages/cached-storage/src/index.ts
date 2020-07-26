@@ -4,10 +4,15 @@ import { RedisClient } from 'redis';
 import { get } from 'lodash';
 import { Sequelize, Op } from 'sequelize';
 import init, { Block, Extrinsic, Events, DispatchableCall } from '@open-web3/indexer/models';
-import { BlockData, ExtrinsicData, EventData, WithNull } from './types';
 import { promisify } from 'util';
 import Scanner from '@open-web3/scanner';
 import { StorageKey } from '@polkadot/types';
+import { range, Observable, concat, from, of } from 'rxjs';
+import { take, switchMap, mergeMap } from 'rxjs/operators';
+
+import { BlockData, ExtrinsicData, EventData, WithNull, BlockResult } from './types';
+
+export * from './types';
 
 interface CachedStorageConfig {
   url: string;
@@ -20,7 +25,7 @@ type KEYTYPE = 'BLOCK' | 'EXTRINSIC' | 'EVENT' | string;
 export class CachedStorage {
   private indexer: Sequelize;
   private db: RedisClient;
-  private scanner: Scanner;
+  public scanner: Scanner;
   public get: (key: string) => Promise<string | null | undefined>;
   public set: (key: string, value: string) => Promise<'Ok' | null | undefined | unknown>;
 
@@ -36,7 +41,7 @@ export class CachedStorage {
     this.scanner = config.scanner;
   }
 
-  async start (): Promise<void> {
+  async prepare (): Promise<void> {
     await this.indexer.sync();
     await this.scanner.wsProvider.connect;
 
@@ -210,7 +215,6 @@ export class CachedStorage {
       if (!block) return null;
 
       const { metadata, registry } = block.chainInfo;
-      console.log([get(metadata, key)]);
       const storageKey = new StorageKey(registry, params ? [get(metadata, key), params] : get(metadata, key));
       const blockAt = { blockNumber: block.number, blockHash: block.hash };
 
@@ -225,5 +229,42 @@ export class CachedStorage {
       console.log(e);
       return null;
     }
+  }
+
+  start (startBlock = 0, endBlock?: number): Observable<BlockResult> {
+    let block$: Observable<number>;
+
+    if (startBlock !== undefined && endBlock !== undefined) {
+      block$ = range(startBlock, endBlock - startBlock + 1);
+    } else {
+      block$ = from(this.scanner.subscribeNewBlockNumber()).pipe(
+        take(1),
+        switchMap((latestBlock) => {
+          return concat(range(startBlock, latestBlock - 1), this.scanner.subscribeNewBlockNumber());
+        })
+      );
+    }
+
+    const getData = async (blockNumber: number): Promise<BlockResult> => {
+      const block = await this.getBlock(blockNumber);
+      const extrinsics = await this.getExtrinsics(blockNumber);
+      const events = await this.getEvents(blockNumber);
+      
+      console.log(block);
+
+      return {
+        blockNumber,
+        block,
+        extrinsics,
+        events
+      };
+    };
+
+    return block$.pipe(
+      mergeMap((blockNumber: number) => {
+        console.log(blockNumber);
+        return from(getData(blockNumber));
+      }, 10)
+    );
   }
 }

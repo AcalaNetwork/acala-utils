@@ -38,7 +38,7 @@ async function run (): Promise<void> {
     scanner: scanner
   });
 
-  await storage.start();
+  await storage.prepare();
 
   console.time('NO_CACHE');
   let block = await storage.getBlock(85841, false);
@@ -54,8 +54,9 @@ async function run (): Promise<void> {
 
   console.timeEnd('CACHE');
 
-  const test = await storage.getStorage(85841, 'query.loans.totalDebits', ['XBTC']);
-  console.log(test);
+  storage.start(0).subscribe((result) => {
+    console.log(result);
+  })
 }
 
 // if error occur, exit
