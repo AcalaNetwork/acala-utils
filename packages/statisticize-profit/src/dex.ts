@@ -45,17 +45,3 @@ export async function getDexShareHolderInfo (asset: string, address: string, blo
         shareRatio
     };
 }
-
-export async function getDex (asset: string, block: Block, scanner: Scanner): Promise<{ other: Fixed18, base: Fixed18 }> {
-    const { metadata, registry } = block.chainInfo;
-    const blockAt = { blockNumber: block.number, blockHash: block.hash };
-
-    const key = new StorageKey(registry, [metadata.query.dex.liquidityPool, asset]);
-
-    const pool = await scanner.getStorageValue<[Balance, Balance]>(key, blockAt);
-
-    return {
-        other: convertToFixed18(pool[0]),
-        base: convertToFixed18(pool[1])
-    };
-}

@@ -9,7 +9,8 @@
   ],
   "resolutions": {
     "pg": "^8.0.3",
-    "sequelize": "^6.0.0-beta.6"
+    "sequelize": "^6.0.0-beta.6",
+    "@polkadot/api": "^1.26.1"
   },
   "scripts": {
     "graphql:acala": "ts-node ./packages/apps/src/graphql.ts",
@@ -19,7 +20,7 @@
     "lint": "eslint --ext .ts"
   },
   "dependencies": {
-    "@acala-network/types": "beta",
+    "@acala-network/types": "^0.3.1",
     "@open-web3/indexer": "beta",
     "@open-web3/scanner": "beta",
     "@open-web3/util": "beta",
