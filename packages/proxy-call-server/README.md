@@ -3,9 +3,8 @@
 proxy sending extrinsic server
 
 ### api interface
-1. add-call
+1. POST:call/add
 ```js
-  type: POST
   params: {
     accessToken: string,
     data: {
@@ -19,9 +18,8 @@ proxy sending extrinsic server
     taskId: string
   }
 ```
-2. cancel-call
+2. POST:call/cancel
 ```js
-  type: POST
   params: {
     accessToken: string,
     taskId: string
@@ -31,12 +29,8 @@ proxy sending extrinsic server
   }
 ```
 
-3. query-call
+3. GET:call/:id
 ```js
-  type: GET
-  query: {
-    taskId: string
-  }
   result: {
     taskId: string,
     taskDetail: {
@@ -50,12 +44,8 @@ proxy sending extrinsic server
   }
 ```
 
-4. query-call-queue
+4. GET:calls/:status
 ```js
-  type: GET
-  query: {
-    status: string
-  },
   result: [{
     taskId: string,
     taskDetail: {

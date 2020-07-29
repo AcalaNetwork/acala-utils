@@ -5,16 +5,36 @@ import * as dotenv from 'dotenv';
 
 dotenv.config();
 
-const provider = new WsProvider('wss://node-6684611760525328384.rz.onfinality.io/ws');
-const dbUrl = 'redis://127.0.0.1:6379';
+const taskUrl = process.env.TASK_DB || '';
+const faucet = process.env.FAUCET || '';
+const sudo = process.env.SUDO || '';
+const endpoint = process.env.ACALA_WS_URL || '';
+const accessToken = process.env.PROXY_SERVER_KEY || '';
+
+const provider = new WsProvider(endpoint);
 
 const server = new ProxyCallServer({
-    accounts: [
-    ],
+    accounts: [{
+        name: 'faucet',
+        mnemonic: faucet
+    }, {
+        name: 'sudo',
+        uri: sudo
+    }],
     api: new ApiPromise(options({ provider })),
-    port: 4000,
-    allowAccessTokens: ['I'],
-    taskDB: dbUrl
+    allowAccessTokens: [accessToken],
+    taskDB: taskUrl,
+    port: 4000
 });
 
 server.start();
+
+process.on('unhandledRejection', (error) => {
+  console.log('unhandledRejection', error);
+  process.exit(1);
+});
+
+process.on('uncaughtException', () => {
+  console.log('unhandleExceptiong');
+  process.exit(1);
+});

@@ -1,25 +1,37 @@
-import { ApiPromise } from '@polkadot/api';
-import { SubmittableExtrinsic } from '@polkadot/api/types';
-import { DispatchError } from '@polkadot/types/interfaces';
-import { ITuple } from '@polkadot/types/types';
-import { get, noop } from 'lodash';
-import { Keyring } from '@polkadot/keyring';
-import { KeyringOptions, KeyringPair } from '@polkadot/keyring/types';
-import * as express from 'express';
-import * as winston from 'winston';
-import * as bodyParser from 'body-parser';
-import { TaskManager } from './task';
+import * as express from "express";
+import * as winston from "winston";
+import * as bodyParser from "body-parser";
+import * as expressWinston from "express-winston";
+import { ApiPromise } from "@polkadot/api";
+import { SubmittableExtrinsic } from "@polkadot/api/types";
+import { DispatchError } from "@polkadot/types/interfaces";
+import { ITuple } from "@polkadot/types/types";
+import { get, noop, isArray } from "lodash";
+import { Keyring } from "@polkadot/keyring";
+import { KeyringOptions, KeyringPair } from "@polkadot/keyring/types";
 
-const format = winston.format;
+import { TaskManager } from "./task";
+import { CallParams, JobId } from "./type";
 
 const logger = winston.createLogger({
-  format: format.combine(format.json(), format.prettyPrint()),
-  transports: [ new winston.transports.Console() ],
+  transports: [new winston.transports.Console()],
+  format: winston.format.combine(
+    winston.format.colorize(),
+    winston.format.json()
+  ),
 });
+
+interface Result {
+  code: number;
+  msg?: string;
+  error?: string;
+  data?: any;
+}
 
 interface AccountConfig {
   name: string;
-  mnemonic: string;
+  mnemonic?: string;
+  uri?: string;
   options?: KeyringOptions;
 }
 
@@ -31,21 +43,13 @@ interface ProxyCallServerConfig {
   taskDB: string;
 }
 
-interface CallParams {
-  path: string;
-  params: string;
-  account: 'FAUCET' | 'SUDO';
-  isSudo?: boolean;
-  isBatch?: boolean;
-}
-
 export class ProxyCallServer {
   private api!: ApiPromise;
   private accounts!: {
     name: string;
-    pair: KeyringPair
+    pair: KeyringPair;
   }[];
-  private accountsConfig!: AccountConfig[]
+  private accountsConfig!: AccountConfig[];
   private allowAccessTokens: string[];
   private port!: number | string;
   private taskManager!: TaskManager;
@@ -61,41 +65,83 @@ export class ProxyCallServer {
 
     this.taskManager = new TaskManager({
       url: config.taskDB,
-      handler: this.execCall
+      handler: this.execCall,
     });
   }
 
-  importAccounts (accounts: AccountConfig[]): { name: string, pair: KeyringPair }[] {
-    return accounts.map((item) => {
-      const keyring = new Keyring(item.options || { type: 'sr25519' });
+  importAccounts(
+    accounts: AccountConfig[]
+  ): { name: string; pair: KeyringPair }[] {
+    return accounts
+      .map((item) => {
+        const keyring = new Keyring(item.options || { type: "sr25519" });
+        const result = { name: item.name, pair: null as any };
 
-      return {
-        name: item.name,
-        pair: keyring.addFromMnemonic(item.mnemonic),
-      }
-    });
+        if (item.mnemonic) {
+          result['pair'] = keyring.addFromMnemonic(item.mnemonic);
+        }
+        if (item.uri) {
+          result['pair'] = keyring.addFromUri(item.uri);
+        }
+
+        return result;
+      })
+      .filter((item) => !!item.pair);
   }
 
-  async start () {
+  async start() {
     await this.api.isReady;
+
     this.accounts = this.importAccounts(this.accountsConfig);
+    this.taskManager.processCallQueue();
+
+    this.api.on('disconnected', () => {
+      this.taskManager.callQueue.pause();
+    });
+    this.api.on('connected', () => {
+      this.taskManager.callQueue.resume();
+    });
 
     this.startServer();
   }
 
-  startServer () {
+  startServer() {
     const app = express();
 
     app.use(bodyParser.json());
     app.use(this.validAccessToken);
+    app.use(
+      expressWinston.logger({
+        transports: [new winston.transports.Console()],
+        format: winston.format.combine(
+          winston.format.colorize(),
+          winston.format.json()
+        ),
+        meta: true,
+        msg: "HTTP {{req.method}} {{req.url}}",
+        expressFormat: true,
+      })
+    );
 
-    app.get('/ping', (req, res) => {
-      res.send('pong');
+    app.get("/ping", (req, res) => {
+      res.send("pong");
     });
 
-    app.post('/add-call', async (req, res) => {
+    // query accounts name and address in service
+    app.get("/accounts", (req, res) => {
+      res.send(
+        this.accounts.map((itme) => ({
+          name: itme.name,
+          address: itme.pair.address,
+        }))
+      );
+    });
+
+    // push a call to job queue
+    app.post("/call/add", async (req, res) => {
       if (!req.body.data) {
-        res.send({ result: false, msg: 'post need data' });
+        res.send({ code: 402, error: "params error, need data" });
+        return;
       }
 
       const result = await this.addCall(req.body.data);
@@ -103,22 +149,49 @@ export class ProxyCallServer {
       res.send(result);
     });
 
-    app.get('/accounts', (req, res) => {
-      res.send(this.accounts.map((itme) => ({ name: itme.name, address: itme.pair.address })));
+    // cancel job
+    app.post("/call/cancel", async (req, res) => {
+      if (!req.body.id) {
+        res.send({ code: 402, error: "params error, need job id" });
+        return;
+      }
+
+      const result = await this.cancelJob(req.body.id);
+
+      res.send(result);
+    });
+
+    // query job information
+    app.get("/call/:id", async (req, res) => {
+      const result = await this.queryJob(req.params.id);
+      res.send(result);
+    });
+
+    // query job information, status 'completed' | 'waiting' | 'active' | 'delayed' | 'failed' | 'paused'
+    app.get("/calls/:status", async (req, res) => {
+      const result = await this.queryJobsList(req.params.status as any);
+
+      res.send({ code: 200, data: result });
     });
 
     app.listen(this.port, () => {
-      logger.log('info', `server start at ${this.port}`);
+      logger.log("info", `server start at ${this.port}`);
     });
   }
 
-  async validAccessToken (req: express.Request, res: express.Response, next: () => any) {
+  async validAccessToken(
+    req: express.Request,
+    res: express.Response,
+    next: () => any
+  ) {
     // validat access token in post request
-    if (req.method === 'POST') {
-      const index = this.allowAccessTokens.findIndex((item) => item === req.body.accessToken);
+    if (req.method === "POST") {
+      const index = this.allowAccessTokens.findIndex(
+        (item) => item === req.body.accessToken
+      );
 
       if (index === -1) {
-        res.send({ result: 'no authority' })
+        res.send({ code: 400, error: "no authority" });
         return;
       }
     }
@@ -126,50 +199,157 @@ export class ProxyCallServer {
     next();
   }
 
-  async addCall (data: CallParams): Promise<{ result: boolean, msg: string | number }> {
-    // pretest tx creator
-    const txC = get(this.api, 'tx.' + data.path);
+  checkCallParams(data: CallParams | CallParams[]): string | undefined {
+    const inner = (data: CallParams) => {
+      let tx: SubmittableExtrinsic<"promise">;
 
-    if (!txC) {
-      return { result: false, msg: `can't find tx.${data.path} method` };
-    }
+      try {
+        if (data.isBatch) {
+          if (!data.batchParams || data.batchParams.length < 1) {
+            return "batch params should not be empty";
+          }
 
-    try {
-      (txC as any).apply(this, data.params);
-    } catch (e) {
-      return { result: false , msg: `error: ${e.toString()}` };
-    }
+          tx = this.api.tx.utility.batch(
+            data.batchParams.map((item) =>
+              get(this.api, "tx." + item.path).apply(undefined, item.params)
+            )
+          );
+        } else {
+          tx = get(this.api, "tx." + data.path).apply(undefined, data.params);
+        }
+      } catch (e) {
+        return `can't create call, ${e.toString()}`;
+      }
 
-    // check account is exist
-    const accountIndex = this.accounts.findIndex((item) => item.name === data.account);
+      // check account is exist
+      const accountIndex = this.accounts.findIndex(
+        (item) => item.name === data.account
+      );
 
-    if (accountIndex === -1) {
-      return { result: false, msg: `account:${data.account} doesn't exist` }
-    }
+      if (accountIndex === -1) {
+        return `account:${data.account} doesn't exist`;
+      }
+    };
 
-    try {
-      const job = await this.taskManager.callQueue.add(data);
-      return { result: true, msg: job.id };
-    } catch (e) {
-      return { result: false, msg: e.toString() };
+    if (isArray(data)) {
+      for (let item of data) {
+        const error = inner(item);
+
+        if (error) {
+          return error;
+        }
+      }
+    } else {
+      const error = inner(data);
+
+      if (error) {
+        return error;
+      }
     }
   }
 
-  async execCall (data: CallParams): Promise<any> {
+  async addCall(data: CallParams | CallParams[]): Promise<Result> {
+    const checkCallParamsError = this.checkCallParams(data);
+
+    if (checkCallParamsError) {
+      return { code: 400, error: checkCallParamsError };
+    }
+
+    try {
+      if (isArray(data)) {
+        const job = await Promise.all(data.map(this.pushJob));
+
+        return { code: 200, data: job };
+      } else {
+        const job = await this.pushJob(data);
+
+        return { code: 200, data: { id: job.id, data: job.data } };
+      }
+    } catch (e) {
+      return { code: 400, error: e.toString() };
+    }
+  }
+
+  async pushJob(data: CallParams) {
+    // if call is batch call, don't retry it
+    if (data.isBatch) {
+      return this.taskManager.callQueue.add(data, { attempts: 0 });
+    } else {
+      return this.taskManager.callQueue.add(data);
+    }
+  }
+
+  async queryJobsList(
+    type: "completed" | "waiting" | "active" | "delayed" | "failed" | "paused"
+  ) {
+    return this.taskManager.callQueue.getJobs([type]);
+  }
+
+  async queryJob(id: JobId): Promise<Result> {
+    const job = await this.taskManager.callQueue.getJob(id);
+
+    if (!job) {
+      return { code: 400, error: "no job found" };
+    }
+
+    return { code: 200, data: job };
+  }
+
+  async cancelJob(id: JobId): Promise<Result> {
+    const job = await this.taskManager.callQueue.getJob(id);
+
+    if (!job) {
+      return { code: 400, error: "no job found" };
+    }
+
+    const state = await job.getState();
+
+    if (state === "completed") {
+      return { code: 400, error: "job had completed" };
+    }
+
+    try {
+      await job.remove();
+      return { code: 200 };
+    } catch (e) {
+      return { code: 400, error: "remove job failed" };
+    }
+  }
+
+  async execCall(data: CallParams): Promise<any> {
+    logger.info("exec call start", data);
+
     let onReject: (resone?: any) => void = noop;
-    let onResolve: () => void = noop;
+    let onResolve: (hash: any) => void = noop;
     const promise = new Promise((resolve, reject) => {
       onResolve = resolve;
       onReject = reject;
     });
 
-    // pretest tx creator
-    const txC = get(this.api, 'tx.' + data.path);
+    const checkCallParamsError = this.checkCallParams(data);
 
-    if (!txC) {
-      onReject(`can't find tx.${data.path} method`);
+    if (checkCallParamsError) {
+      onReject(checkCallParamsError);
+    }
 
-      return promise;
+    let unSignedTx: SubmittableExtrinsic<"promise">;
+
+    if (data.isBatch && data.batchParams) {
+      unSignedTx = this.api.tx.utility.batch(
+        data.batchParams.map((item) =>
+          get(this.api, "tx." + item.path).apply(undefined, item.params)
+        )
+      );
+    } else {
+      unSignedTx = get(this.api, "tx." + data.path).apply(
+        undefined,
+        data.params
+      );
+    }
+
+    // wrap sudo call
+    if (data.isSudo) {
+      unSignedTx = this.api.tx.sudo.sudo(unSignedTx);
     }
 
     const account = this.accounts.find((item) => item.name === data.account);
@@ -181,41 +361,56 @@ export class ProxyCallServer {
     }
 
     try {
-      const tx = await ((txC as any).apply(this, data.params) as SubmittableExtrinsic<'promise'>).signAsync(account!.pair);
+      const tx = await unSignedTx.signAsync(account.pair);
 
-      tx.send((result) => {
+      const unsub = await tx.send((result) => {
         if (result.isCompleted) {
           let flag = true;
-          let errorMessage: DispatchError['type']= '';
+          let errorMessage: DispatchError["type"] = "";
 
           for (const event of result.events) {
             const { data, method, section } = event.event;
 
+            if (section === "utility" && method === "BatchInterrupted") {
+              flag = false;
+              errorMessage = "batch error";
+              break;
+            }
+
             // if extrinsic failed
-            if (section === 'system' && method === 'ExtrinsicFailed') {
-              const [dispatchError] = data as unknown as ITuple<[DispatchError]>;
-              
+            if (section === "system" && method === "ExtrinsicFailed") {
+              const [dispatchError] = (data as unknown) as ITuple<
+                [DispatchError]
+              >;
+
               // get error message
               if (dispatchError.isModule) {
                 try {
                   const mod = dispatchError.asModule;
-                  const error = this.api.registry.findMetaError(new Uint8Array([Number(mod.index), Number(mod.error)]));
-      
+                  const error = this.api.registry.findMetaError(
+                    new Uint8Array([Number(mod.index), Number(mod.error)])
+                  );
+
                   errorMessage = `${error.section}.${error.name}`;
                 } catch (error) {
                   // swallow error
-                  errorMessage = 'Unknown error';
+                  errorMessage = "Unknown error";
                 }
               }
               flag = false;
+              break;
             }
           }
 
           if (flag) {
-            onResolve();
+            logger.info("call", { ...data, result: "success" });
+            onResolve(tx.hash.toString());
           } else {
+            logger.error("call", { ...data, result: errorMessage });
             onReject(errorMessage);
           }
+
+          unsub();
         }
       });
     } catch (e) {
