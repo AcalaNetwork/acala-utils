@@ -46,7 +46,7 @@ export function initEventModel (db: Sequelize): Model {
             type: DataTypes.BIGINT,
         },
         createAt: {
-            type: DataTypes.DATE,
+            type: DataTypes.STRING,
         }
     }, {
         sequelize: db,

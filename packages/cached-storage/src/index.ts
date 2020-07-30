@@ -1,20 +1,20 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { RedisClient } from 'redis';
+import { RedisClient, createClient } from 'redis';
 import { get } from 'lodash';
 import { Sequelize, Op } from 'sequelize';
 import init, { Block, Extrinsic, Events, DispatchableCall } from '@open-web3/indexer/models';
 import { promisify } from 'util';
 import Scanner from '@open-web3/scanner';
 import { StorageKey } from '@polkadot/types';
-import { range, Observable, concat, from, of } from 'rxjs';
+import { range, Observable, concat, from } from 'rxjs';
 import { take, switchMap, mergeMap } from 'rxjs/operators';
 
 import { BlockData, ExtrinsicData, EventData, WithNull, BlockResult } from './types';
 
 export * from './types';
 
-interface CachedStorageConfig {
+export interface CachedStorageConfig {
   url: string;
   indexer: Sequelize;
   scanner: Scanner;
@@ -30,7 +30,7 @@ export class CachedStorage {
   public set: (key: string, value: string) => Promise<'Ok' | null | undefined | unknown>;
 
   constructor(config: CachedStorageConfig) {
-    this.db = new RedisClient({
+    this.db = createClient({
       url: config.url
     });
 
@@ -43,7 +43,7 @@ export class CachedStorage {
 
   async prepare (): Promise<void> {
     await this.indexer.sync();
-    await this.scanner.wsProvider.connect;
+    await this.scanner.wsProvider.connect();
 
     init(this.indexer);
   }
@@ -127,30 +127,41 @@ export class CachedStorage {
             blockNumber: item.blockHash,
             index: item.index,
             section: item.section,
+            signer: item.signer,
             method: item.method,
             args: item.args,
-            result: item.result,
-            isDispatched: false
+            result: item.result
           });
         });
       }
 
       if (originDispatchCall.length) {
         originDispatchCall.forEach((item) => {
-          const parentExtrinsic = output.find((extrins) => {
-            return extrins.index == (item.extrinsic ? item.extrinsic.split('-')[1] : null);
+
+          const [block, extrinsicIndex, childrenIndex] = item.id.split('-');
+
+          if (!childrenIndex) {
+            return;
+          }
+
+          const parentExtrinsic = output.find((extrinsic) => {
+            return extrinsic.index == extrinsicIndex;
           });
 
           output.push({
-            hash: parentExtrinsic ? parentExtrinsic.hash : '',
+            hash: item.hash,
             blockHash: originBlock ? originBlock.blockHash : '',
-            blockNumber: originBlock ? originBlock.blockNumber : '',
+            blockNumber: originBlock ? originBlock.blockNumber : -1,
             index: parentExtrinsic? parentExtrinsic.index : 0,
             method: item.method,
             section: item.section,
+            signer: parentExtrinsic ? parentExtrinsic.signer : '',
             args: item.args,
-            result: parentExtrinsic ? parentExtrinsic.result : false,
+            result: parentExtrinsic ? parentExtrinsic.result : '',
+
             isDispatched: true,
+            parentHash: parentExtrinsic?.hash,
+            dispatchIndex: item.extrinsic.split('-')[2] || null
           })
         })
       }
@@ -246,12 +257,10 @@ export class CachedStorage {
     }
 
     const getData = async (blockNumber: number): Promise<BlockResult> => {
-      const block = await this.getBlock(blockNumber);
-      const extrinsics = await this.getExtrinsics(blockNumber);
-      const events = await this.getEvents(blockNumber);
+      const block = await this.getBlock(blockNumber, false);
+      const extrinsics = await this.getExtrinsics(blockNumber, false);
+      const events = await this.getEvents(blockNumber, false);
       
-      console.log(block);
-
       return {
         blockNumber,
         block,
@@ -262,9 +271,8 @@ export class CachedStorage {
 
     return block$.pipe(
       mergeMap((blockNumber: number) => {
-        console.log(blockNumber);
         return from(getData(blockNumber));
-      }, 10)
+      }, 100)
     );
   }
 }

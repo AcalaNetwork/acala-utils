@@ -46,7 +46,7 @@ export function initExtrinsicModel (db: Sequelize): Model {
             type: DataTypes.STRING,
         },
         createAt: {
-            type: DataTypes.DATE
+            type: DataTypes.STRING
         }
     }, {
         sequelize: db,

@@ -1,35 +1,30 @@
-import { LoanModel } from '@acala-weaver/database-models';
-import { Middleware, eventsHandler } from '@acala-weaver/chain-spider';
+import { get } from "lodash";
+import { LoanModel } from "@acala-weaver/database-models";
+import { eventsHandler } from "@acala-weaver/chain-spider";
+import { Middleware } from "../types";
 
-export const loan: Middleware = async (data, next, context) => {
-    if (data.result) {
-        const block = data.result;
-        const temp: unknown[] = [];
+export const loan: Middleware = async (data) => {
+  const block = data.block;
+  const temp: unknown[] = [];
 
-        eventsHandler([
-            {
-                section: 'loans',
-                method: 'PositionUpdated',
-                handler: (event) => {
-                    const { args } = event;
+  eventsHandler([
+    {
+      section: "loans",
+      method: "PositionUpdated",
+      handler: (event) => {
+        const { args } = event;
 
-                    temp.push({
-                        id: `${args[1]}-${args[0]}`,
-                        currency: args[1],
-                        account: args[0],
-                        updateAtBlock: block.number,
-                        updateAtBlockHash: block.hash,
-                        updateAt: block.timestamp
-                    });
-                }
-            }
-        ])(block.events);
-
-        await LoanModel.bulkCreate(temp, {
-            updateOnDuplicate: ['id'],
-            transaction: context.transaction
+        temp.push({
+          id: `${get(args, "1")}-${get(args, "0")}`,
+          currency: get(args, "1"),
+          account: get(args, "0"),
+          updateAtBlock: block?.blockNumber,
+          updateAtBlockHash: block?.blockHash,
+          updateAt: block?.timestamp,
         });
-    }
+      },
+    },
+  ])(data.events);
 
-    await next();
+  await LoanModel.bulkCreate(temp, { updateOnDuplicate: [] });
 }

@@ -1,7 +1,7 @@
 export interface BlockData {
   blockHash: string;
-  blockNumber: number | string;
-  timestamp: number | string;
+  blockNumber: number;
+  timestamp: number;
   parentHash: string;
   author: string;
 }
@@ -9,23 +9,26 @@ export interface BlockData {
 export interface ExtrinsicData {
   hash: string;
   blockHash: string;
-  blockNumber: number | string;
-  index: number | string;
+  blockNumber: number;
+  index: number;
   section: string;
+  signer: string;
   method: string;
-  args: unknown;
-  result?: boolean;
+  args: Record<string, any> | undefined;
+  result?: string;
 
-  isDispatched: boolean;
+  isDispatched?: boolean;
+  parentHash?: string;
+  dispatchIndex?: number;
 }
 
 export interface EventData {
   blockHash: string;
   blockNumber: string;
-  index: number | string;
+  index: number;
   section: string;
   method: string;
-  args: unknown;
+  args: any[] | undefined;
 }
 
 export type WithNull<T>  = T | null;

@@ -10,7 +10,7 @@ dotenv.config();
 
 async function run (): Promise<void> {
   const wsUrl = process.env.ACALA_WS_URL || 'wss://testnet-node-1.acala.laminar.one/ws';
-  const host = process.env.INFLUX_DB_HOST;
+  const host = process.env.INFLUX_DB;
 
   assert(host, 'influxed db host should not be empty !');
 

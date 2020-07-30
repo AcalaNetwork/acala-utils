@@ -8,12 +8,14 @@
         "paths": {
             "@acala-weaver/apps": ["apps"],
             "@acala-weaver/scan-storage-data": ["scan-storage-data"],
+            "@acala-weaver/cached-storage": ["cached-storage"],
             "@acala-weaver/graphql-server": ["graphql-server"],
             "@acala-weaver/database-models": ["database-models"],
             "@acala-weaver/chain-spider": ["chain-spider"],
             "@acala-weaver/storage-recoder": ["storage-recoder"],
             "@acala-weaver/chain-recoder": ["chain-recoder"],
-            "@acala-weaver/ausd-mover": ["ausd-mover"]
+            "@acala-weaver/ausd-mover": ["ausd-mover"],
+            "@acala-weaver/statisticize-profit": ["statisticize-profit"]
         }
     },
 }

@@ -14,14 +14,14 @@ export function initAccountModel (db: Sequelize): Model {
             primaryKey: true,
             unique: true
         },
-        createAtBlcok: {
+        createAtBlock: {
             type: DataTypes.INTEGER
         },
-        createAtBlcokHash: {
+        createAtBlockHash: {
             type: DataTypes.STRING
         },
         createAt: {
-            type: DataTypes.DATE
+            type: DataTypes.STRING
         }
     }, {
         sequelize: db,

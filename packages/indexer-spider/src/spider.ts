@@ -2,7 +2,8 @@ import { scheduleJob } from 'node-schedule';
 
 import { defaultLogger } from "@open-web3/util";
 import { CachedStorage } from '@acala-weaver/cached-storage';
-
+import Scanner from "@open-web3/scanner";
+import { ScannerOptions, SubscribeBlock, SubscribeBlockError } from "@open-web3/scanner/types";
 import { Middleware, Context, SpiderController, Rule, Job } from "./types";
 import { Logger } from '@open-web3/util/logger';
 

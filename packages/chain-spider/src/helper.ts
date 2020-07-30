@@ -10,9 +10,9 @@ type HandlerConfigHashMap<T> = {
     [k in string]: HandlerConfig<T>['handler'];
 }
 
-type Handler<T = Event> = (config: HandlerConfig<T>[]) => (list: T[]) => void;
+export type Handler<T = Event> = (config: HandlerConfig<T>[]) => (list: T[]) => void;
 
-function handler<T extends { section: string, method: string } > (config: HandlerConfig<T>[]): (list: T[]) => void {
+export function handler<T extends { section: string, method: string } > (config: HandlerConfig<T>[]): (list: T[]) => void {
     const dispatcherHashMap: HandlerConfigHashMap<T> = config.reduce((hashMap, item) => {
         hashMap[`${item.section}_${item.method}`] = item.handler
         return hashMap;
@@ -30,7 +30,7 @@ function handler<T extends { section: string, method: string } > (config: Handle
     }
 }
 
-export const eventsHandler = handler as Handler<Event>;
+export const eventsHandler = handler as Handler<Partial<Event>>;
 
-export const extrinsicHandler = handler as Handler<Extrinsic>;
+export const extrinsicHandler = handler as Handler<Partial<Extrinsic>>;
 

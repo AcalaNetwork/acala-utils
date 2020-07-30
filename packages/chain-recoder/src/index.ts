@@ -1,95 +1,58 @@
 import { Sequelize } from "sequelize";
-import { ChainSpider, SpiderController } from "@acala-weaver/chain-spider";
-import { ScannerOptions } from "@open-web3/scanner/types";
 import * as models from "@acala-weaver/database-models";
-import { SyncModel } from "@acala-weaver/database-models";
-import * as middleware from './middleware';
-import * as jobs from './jobs';
+import * as middleware from "./middleware";
+import { CachedStorage, CachedStorageConfig } from "@acala-weaver/cached-storage";
+import * as jobs from "./jobs";
+import Logger from "@open-web3/util/logger";
 
-interface Options extends ScannerOptions {
-  db: Sequelize;
+interface Options extends CachedStorageConfig {
+  recoderDB: Sequelize;
 }
 
-class Controller implements SpiderController {
-  async getLatestBlock(): Promise<number> {
-    const result = await SyncModel.max("blockNumber");
-
-    return Number(result) || 0;
-  }
-
-  async onSyncSuccess(): Promise<boolean> {
-    // do nothing
-    return true;
-  }
-
-
-  async onSyncFailure(): Promise<boolean> {
-    // do nothing
-    return true;
-  }
-}
-
+const logger = Logger.createLogger('chain-recoder');
 export class Recoder {
-  #chainSpider!: ChainSpider;
-  #db!: Sequelize;
+  #storage !: CachedStorage;
+  #recoderDB!: Sequelize;
 
   constructor(options: Options) {
     // init db
-    this.#db = options.db;
+    this.#recoderDB = options.recoderDB;
     this.initDB();
 
-    // init chainSpider
-    this.#chainSpider = new ChainSpider({
-      ...options,
-      gap: 3600, // every 4min
-      controller: new Controller(),
+    // init storage
+    this.#storage = new CachedStorage({
+      ...options
     });
   }
 
   initDB(): void {
-    // base db
-    models.initSyncModel(this.#db);
-    models.initBlockModel(this.#db);
-    models.initExtrinsicModel(this.#db);
-    models.initEventModel(this.#db);
-
     // loans
-    models.initLoanModel(this.#db);
+    models.initLoanModel(this.#recoderDB);
 
     // accounts
-    models.initAccountModel(this.#db);
-    models.initTransferModel(this.#db);
+    models.initAccountModel(this.#recoderDB);
+    models.initTransferModel(this.#recoderDB);
 
     // auction
-    models.initAuctionModel(this.#db);
+    models.initAuctionModel(this.#recoderDB);
   }
 
   async run(): Promise<void> {
+    logger.info('process start');
     // prepare databse
-    await this.#db.sync();
-
-    // initialize context
-    this.#chainSpider.use(async (data, next, context) => {
-      context.db = this.#db;
-      await next();
-    });
-
-    // sync middleware should be first!
-    this.#chainSpider.use(middleware.sync);
-
-    // base chain data
-    this.#chainSpider.use(middleware.block);
-    this.#chainSpider.use(middleware.extrinsic);
-    this.#chainSpider.use(middleware.event);
-
-    this.#chainSpider.use(middleware.account);
-    this.#chainSpider.use(middleware.transfer);
-    this.#chainSpider.use(middleware.loan);
-    this.#chainSpider.use(middleware.auction);
+    await this.#recoderDB.sync();
+    await this.#storage.prepare();
 
     // update loan information every 4 hour
-    this.#chainSpider.addJob('*/4 * * *', jobs.updateLoanInformation);
-
-    return this.#chainSpider.start();
+    // this.#storage.addJob("*/4 * * *", jobs.updateLoanInformation);
+    const latest = await this.#storage.get('RECODER_LATEST');
+    this.#storage.start(latest ? Number(latest) : 0).subscribe((data) => {
+      logger.info(`process #${data.blockNumber}`);
+      middleware.account(data);
+      middleware.transfer(data);
+      middleware.loan(data);
+      middleware.auction(data);
+      this.#storage.set('RECODER_LATEST', data.blockNumber.toString());
+    });
   }
 }

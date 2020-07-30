@@ -1,31 +1,26 @@
-import { AccountModel } from '@acala-weaver/database-models';
-import { Middleware, eventsHandler } from '@acala-weaver/chain-spider';
+import { get } from 'lodash';
+import { AccountModel } from "@acala-weaver/database-models";
+import { eventsHandler } from "@acala-weaver/chain-spider";
+import { Middleware } from "../types";
 
-export const account: Middleware = async (data, next, context) => {
-    if (data.result) {
-        const block = data.result;
-        const temp: unknown[] = [];
+export const account: Middleware = async (data) => {
+  const block = data.block;
+  const temp: unknown[] = [];
 
-        eventsHandler([
-            {
-                section: 'system',
-                method: 'NewAccount',
-                handler: (event) => {
-                    temp.push({
-                        account: event.args[0],
-                        createAtBlock: block.number,
-                        createAtBlockHash: block.hash,
-                        createAt: block.timestamp
-                    });
-                }
-            }
-        ])(data.result.events);
-
-        await AccountModel.bulkCreate(temp, {
-            updateOnDuplicate: ['account'],
-            transaction: context.transaction
+  eventsHandler([
+    {
+      section: "system",
+      method: "NewAccount",
+      handler: (event) => {
+        temp.push({
+          account: get(event, 'args.0', ''),
+          createAtBlock: block?.blockNumber,
+          createAtBlockHash: block?.blockHash,
+          createAt: block?.timestamp,
         });
-    }
+      },
+    },
+  ])(data.events);
 
-    await next();
-}
+  await AccountModel.bulkCreate(temp, { updateOnDuplicate: ["account"] });
+};
