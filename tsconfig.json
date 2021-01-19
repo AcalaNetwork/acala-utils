@@ -1,0 +1,24 @@
+{
+  "compilerOptions": {
+    /* Basic Options */
+    "target": "ESNext",                          /* Specify ECMAScript target version: 'ES3' (default), 'ES5', 'ES2015', 'ES2016', 'ES2017','ES2018' or 'ESNEXT'. */
+    "module": "commonjs",
+    "skipLibCheck": true,
+    "moduleResolution": "Node",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noFallthroughCasesInSwitch": true,    /* Report errors for fallthrough cases in switch statement. */
+    "noImplicitReturns": true,             /* Report error when not all code paths in function return a value. */
+    "strict": true,                           /* Enable all strict type-checking options. */
+    "noImplicitAny": true,
+    "esModuleInterop": true,
+    "experimentalDecorators": true,           /* Enables experimental support for ES7 decorators. */
+    "baseUrl": "packages",                       /* Base directory to resolve non-absolute module names. */
+    "paths": {
+      "@acala-utils/proxy-service": ["proxy-service/src"],
+      "@acala-utils/proxy-service/*": ["proxy-service/src/*"],
+    }                           /* A series of entries which re-map imports to lookup locations relative to the 'baseUrl'. */
+  },
+  "exclude": [ "build/**/*", "**/build/**/*" ],
+  "include": [ "node_modules" ]
+}

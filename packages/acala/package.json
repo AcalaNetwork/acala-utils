@@ -1,0 +1,21 @@
+{
+  "name": "@polkadot-utils/acala",
+  "version": "0.0.1",
+  "description": "acala api proxy service",
+  "author": "qwer951123 <qiuhao951@gmail.com>",
+  "homepage": "",
+  "license": "ISC",
+  "main": "build/index.js",
+  "publishConfig": {
+    "registry": "https://registry.npm.taobao.org"
+  },
+  "scripts": {
+    "start": "/node-modules/.bin/ts-node ./packages/acala/src/index.ts"
+  },
+  "dependencies": {
+    "@acala-network/api": "^0.6.1",
+    "@acala-utils/proxy-service": "^0.0.1",
+    "@polkadot/api": "^3.4.1",
+    "toml": "^3.0.0"
+  }
+}
