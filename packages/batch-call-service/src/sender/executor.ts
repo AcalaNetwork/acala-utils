@@ -2,6 +2,7 @@ import { ApiPromise } from '@polkadot/api'
 import { Keyring } from '@polkadot/keyring'
 import { stringToU8a, hexToU8a } from '@polkadot/util'
 import { autobind } from 'core-decorators'
+import { Job } from '../models'
 
 export class Executor {
     #keyring: Keyring
@@ -55,9 +56,11 @@ export class Executor {
 
         if (!executor) throw new Error(`can't find executor ${name}`)
 
-        const accountInfo = await this.#api.query.system.account(executor.address)
+        const maxJobId = await Job.max('id')
 
-        const token = `${this.#password.get(executor.meta.name as string)}#${accountInfo.nonce.toNumber()}`
+        const token = process.env.NODE_ENV === 'development'
+            ? `${this.#password.get(executor.meta.name as string)}`
+            : `${this.#password.get(executor.meta.name as string)}#${(Number(maxJobId) || 0) + 1}`
 
         try {
             return executor.verify(stringToU8a(token), hexToU8a(signature))

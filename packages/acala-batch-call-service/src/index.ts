@@ -1,7 +1,7 @@
 import { options } from '@acala-network/api'
 import { ApiPromise, WsProvider } from '@polkadot/api'
 
-import { ProxyService } from '@acala-utils/proxy-service'
+import { ProxyService } from '@acala-utils/batch-call-service'
 
 import Config from './config'
 

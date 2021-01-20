@@ -15,8 +15,8 @@
     "experimentalDecorators": true,           /* Enables experimental support for ES7 decorators. */
     "baseUrl": "packages",                       /* Base directory to resolve non-absolute module names. */
     "paths": {
-      "@acala-utils/proxy-service": ["proxy-service/src"],
-      "@acala-utils/proxy-service/*": ["proxy-service/src/*"],
+      "@acala-utils/batch-call-service": ["batch-call-service/src"],
+      "@acala-utils/batch-call-service/*": ["batch-call-service/src/*"],
     }                           /* A series of entries which re-map imports to lookup locations relative to the 'baseUrl'. */
   },
   "exclude": [ "build/**/*", "**/build/**/*" ],

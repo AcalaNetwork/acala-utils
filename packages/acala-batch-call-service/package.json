@@ -1,0 +1,18 @@
+{
+  "name": "@acala-utils/acala-batch-call-service",
+  "version": "0.0.1",
+  "description": "acala batch call service",
+  "author": "qwer951123 <qiuhao951@gmail.com>",
+  "homepage": "",
+  "license": "Apache-2.0",
+  "scripts": {
+    "dev": "NODE_ENV=development yarn run start",
+    "start": "/node-modules/.bin/ts-node ./src/index.ts"
+  },
+  "dependencies": {
+    "@acala-network/api": "^0.6.1",
+    "@acala-utils/batch-call-service": "^0.0.1",
+    "@polkadot/api": "^3.4.1",
+    "toml": "^3.0.0"
+  }
+}
