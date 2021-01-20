@@ -1,0 +1,12 @@
+[db]
+url = 'postgres://localhost'
+
+[acala]
+endpoint = 'ws://localhost:9944'
+
+[web]
+port = 3000
+
+[executor.sudo]
+uri = '//Alice'
+password = 'hello_alice'
