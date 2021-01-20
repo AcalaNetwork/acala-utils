@@ -1,5 +1,6 @@
 import { ApiPromise } from '@polkadot/api'
-import { DispatchError, U32F32 } from '@polkadot/types/interfaces'
+import { DispatchError } from '@polkadot/types/interfaces'
+import { u32 } from '@polkadot/types'
 import { ITuple, IEvent } from '@polkadot/types/types'
 import { SubmittableExtrinsic } from '@polkadot/api/promise/types'
 import { autobind } from 'core-decorators'
@@ -8,6 +9,7 @@ import { Deferred, logger } from '../utils'
 import { Job, Transition } from '../models'
 import type { TransitionAttributes } from '../models'
 import { Executor } from './executor'
+import { Sequelize } from 'sequelize/types'
 
 interface SenderOptions {
     api: ApiPromise
@@ -82,16 +84,14 @@ export class SenderService {
             const transitions = await this.getTransitions(job.get('id'))
 
             if (transitions) {
-                // lock all transition
-
                 try {
                     await Transition.bulkCreate(
                         transitions.map(
-                            (item): TransitionAttributes => ({
-                                ...(item.toJSON() as TransitionAttributes),
-                                status: 'locked',
+                            (item) => ({
+                                ...item.toJSON(),
+                                status: 'locked'
                             })
-                        ),
+                        ) as TransitionAttributes[],
                         { updateOnDuplicate: ['status'] }
                     )
                 } catch (e) {
@@ -137,14 +137,14 @@ export class SenderService {
 
                         await Transition.bulkCreate(
                             sendableTxs.slice(0, successIndex).map(
-                                (item, index): TransitionAttributes => ({
+                                (item, index) => ({
                                     ...item,
                                     txHash: hash,
                                     batchIndex: index,
                                     status: 'success',
-                                }),
-                                { updateOnDuplicate: ['txHash', 'batchIndex', 'status'] }
-                            )
+                                })
+                            ) as TransitionAttributes[],
+                            { updateOnDuplicate: ['txHash', 'batchIndex', 'status'] }
                         )
 
                         if (successIndex !== sendableTxs.length) {
@@ -152,7 +152,7 @@ export class SenderService {
                                 sendableTxs
                                     .slice(0, successIndex)
                                     .map(
-                                        (item, index): TransitionAttributes => ({
+                                        (item, index) => ({
                                             ...item,
                                             txHash: hash,
                                             batchIndex: index,
@@ -161,7 +161,7 @@ export class SenderService {
                                     )
                                     .concat(
                                         sendableTxs.slice(successIndex).map(
-                                            (item, index): TransitionAttributes => ({
+                                            (item, index) => ({
                                                 ...item,
                                                 txHash: hash,
                                                 batchIndex: successIndex + index,
@@ -169,7 +169,7 @@ export class SenderService {
                                                 reason: 'batch interrupted',
                                             })
                                         )
-                                    ),
+                                    ) as TransitionAttributes[],
                                 { updateOnDuplicate: ['txHash', 'batchIndex', 'status', 'reason'] }
                             )
                         }
@@ -178,16 +178,16 @@ export class SenderService {
                         logger.error(`execute error at ${job.get('id')}, ${e}`)
                     }
                 }
+
+                const isComplated = await this.checkJobComplated(job.get('id'))
+
+                await Job.update(
+                    {
+                        status: isComplated ? 'complated' : 'processing',
+                    },
+                    { where: { id: job.get('id') } }
+                )
             }
-
-            const isComplated = await this.checkJobComplated(job.get('id'))
-
-            await Job.update(
-                {
-                    status: isComplated ? 'complated' : 'processing',
-                },
-                { where: { id: job.get('id') } }
-            )
         }
     }
 
@@ -227,9 +227,9 @@ export class SenderService {
                     })
 
                 if (interruptedEvent.length) {
-                    const { data } = (interruptedEvent[0].event as unknown) as IEvent<[U32F32, DispatchError]>
+                    const { data } = (interruptedEvent[0].event as unknown) as IEvent<[u32, DispatchError]>
 
-                    deferred.resolve([extrinsics.hash.toString(), data[0].toNumber()])
+                    deferred.resolve([extrinsics.hash.toString(), Number(data[0].toString())])
 
                     return
                 }
@@ -253,8 +253,8 @@ export class SenderService {
                         try {
                             const error = this.#api.registry.findMetaError(
                                 new Uint8Array([
-                                    dispatchError.asModule.index.toNumber(),
-                                    dispatchError.asModule.error.toNumber(),
+                                    Number(dispatchError.asModule.index.toString()),
+                                    Number(dispatchError.asModule.error.toString()),
                                 ])
                             )
 
