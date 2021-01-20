@@ -6,7 +6,7 @@ import { Deferred, logger } from '../utils'
 import { getTransitionRouter } from './controllers'
 
 interface WebServiceConfig {
-    port: number;
+    port: number
     executorVerifyHandler: (name: string, signature: string) => Promise<boolean>
 }
 
@@ -14,11 +14,11 @@ class WebService {
     #app!: Express
     #config: WebServiceConfig
 
-    constructor (config: WebServiceConfig) {
+    constructor(config: WebServiceConfig) {
         this.#config = config
     }
 
-    async start () {
+    async start() {
         this.#app = express()
 
         const server = http.createServer(this.#app)
@@ -37,11 +37,11 @@ class WebService {
         return deferred.promise
     }
 
-    private initRouters () {
+    private initRouters() {
         this.#app.use('/transition', getTransitionRouter(this.executorVerifyMiddleware))
     }
 
-    private initMiddlewares () {
+    private initMiddlewares() {
         // parse body
         this.#app.use(bodyParser.json())
 
@@ -51,7 +51,7 @@ class WebService {
                 res.status(500)
                 res.json({
                     code: 1001,
-                    message: 'parse body failed'
+                    message: 'parse body failed',
                 })
             }
 
@@ -59,7 +59,7 @@ class WebService {
         })
     }
 
-    private executorVerifyMiddleware: RequestHandler =  async (req, res, next) => {
+    private executorVerifyMiddleware: RequestHandler = async (req, res, next) => {
         const { executor, signature } = req.body
 
         const status = await this.#config.executorVerifyHandler(executor, signature)
@@ -67,7 +67,7 @@ class WebService {
         if (!status) {
             res.status(500).json({
                 code: 1003,
-                message: `verify with ${executor} failued`
+                message: `verify with ${executor} failued`,
             })
 
             return

@@ -1,5 +1,6 @@
 import { ApiPromise } from '@polkadot/Api'
 import { Sequelize } from 'sequelize'
+import { autobind } from 'core-decorators'
 
 import { logger } from './utils'
 import { WebService } from './web-service'
@@ -25,15 +26,16 @@ export class ProxyService {
     #executor!: Executor
     #senderService!: SenderService
 
-    constructor (config: ProxyServiceConfig) {
+    constructor(config: ProxyServiceConfig) {
         this.#config = config
         this.#api = config.api
     }
 
-    async create () {
+    @autobind
+    public async create() {
         try {
             await this.#api.connect
-            // don't change the init order 
+            // don't change the init order
             this.initExecutor()
             await this.initDB()
 
@@ -44,19 +46,19 @@ export class ProxyService {
         }
     }
 
-    private initSenderService () {
+    private initSenderService() {
         this.#senderService = new SenderService({
             api: this.#api,
-            executor: this.#executor
+            executor: this.#executor,
         })
 
         this.#senderService.start()
     }
 
-    private async initWebService () {
+    private async initWebService() {
         const webService = new WebService({
             port: this.#config.web.port || 3000,
-            executorVerifyHandler: this.#executor.verify
+            executorVerifyHandler: this.#executor.verify,
         })
 
         await webService.start()
@@ -64,16 +66,16 @@ export class ProxyService {
         this.#webService = webService
     }
 
-    private async initDB () {
+    private async initDB() {
         const sequelize = new Sequelize(this.#config.db.url, {
             dialect: 'postgres',
             logging: false,
             dialectOptions: {
                 ssl: {
                     require: true,
-                    rejectUnauthorized: false
-                }
-            }
+                    rejectUnauthorized: false,
+                },
+            },
         })
 
         modelInit(sequelize)
@@ -85,7 +87,7 @@ export class ProxyService {
         this.#sequelize = sequelize
     }
 
-    private initExecutor () {
+    private initExecutor() {
         const executor = new Executor(this.#api)
 
         this.#config.executors.forEach((item) => {

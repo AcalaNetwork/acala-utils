@@ -18,13 +18,13 @@ export class SenderService {
     #api: ApiPromise
     #executor: Executor
 
-    constructor (options: SenderOptions) {
+    constructor(options: SenderOptions) {
         this.#api = options.api
         this.#executor = options.executor
     }
 
     @autobind
-    public sendableCheck (section: string, method: string, params: any[], index: number = 0): boolean {
+    public sendableCheck(section: string, method: string, params: any[], index: number = 0): boolean {
         try {
             this.#api.tx[section][method].apply(this.#api, params)
         } catch (e) {
@@ -37,8 +37,9 @@ export class SenderService {
     }
 
     @autobind
-    public buildBatchCall (tx: TransitionAttributes[]):
-    [
+    public buildBatchCall(
+        tx: TransitionAttributes[]
+    ): [
         SubmittableExtrinsic | null,
         (TransitionAttributes & { sendable: boolean })[],
         (TransitionAttributes & { sendable: boolean })[]
@@ -48,7 +49,7 @@ export class SenderService {
         for (const item of tx) {
             _tx.push({
                 ...item,
-                sendable: this.sendableCheck(item.section, item.method, item.params)
+                sendable: this.sendableCheck(item.section, item.method, item.params),
             })
         }
 
@@ -68,15 +69,15 @@ export class SenderService {
     }
 
     @autobind
-    public async start () {
-        while(true) {
+    public async start() {
+        while (true) {
             const job = await this.getJob()
 
-            if(!job) continue
+            if (!job) continue
 
             const isSendable = await this.checkExecutorStatus(job)
 
-            if(!isSendable) continue
+            if (!isSendable) continue
 
             const transitions = await this.getTransitions(job.get('id'))
 
@@ -85,32 +86,34 @@ export class SenderService {
 
                 try {
                     await Transition.bulkCreate(
-                        transitions.map((item): TransitionAttributes => ({
-                            ...(item.toJSON() as TransitionAttributes),
-                            status: 'locked'
-                        })),
+                        transitions.map(
+                            (item): TransitionAttributes => ({
+                                ...(item.toJSON() as TransitionAttributes),
+                                status: 'locked',
+                            })
+                        ),
                         { updateOnDuplicate: ['status'] }
                     )
-                } catch(e) {
+                } catch (e) {
                     logger.error(`try lock transitions at ${job.get('id')} failed, ${e}`)
 
                     continue
                 }
 
-                const [call, sendableTxs, errroTxs]= this.buildBatchCall(
+                const [call, sendableTxs, errroTxs] = this.buildBatchCall(
                     transitions.map((item) => item.toJSON()) as TransitionAttributes[]
                 )
 
-                
                 if (errroTxs.length) {
                     try {
                         await Transition.bulkCreate(
-                            errroTxs
-                                .map((item): TransitionAttributes=> ({
+                            errroTxs.map(
+                                (item): TransitionAttributes => ({
                                     ...item,
                                     status: 'failed',
-                                    reason: 'build tx error'
-                                })),
+                                    reason: 'build tx error',
+                                })
+                            ),
                             { updateOnDuplicate: ['status', 'reason'] }
                         )
                     } catch (e) {
@@ -133,32 +136,40 @@ export class SenderService {
                         logger.info(`execute job#${job.get('id')} end at ${hash}`)
 
                         await Transition.bulkCreate(
-                            sendableTxs.slice(0, successIndex).map((item, index): TransitionAttributes => ({
-                                ...item,
-                                txHash: hash,
-                                batchIndex: index,
-                                status: 'success'
-                            }),
-                            { updateOnDuplicate: ['txHash', 'batchIndex', 'status'] }
-                        )
+                            sendableTxs.slice(0, successIndex).map(
+                                (item, index): TransitionAttributes => ({
+                                    ...item,
+                                    txHash: hash,
+                                    batchIndex: index,
+                                    status: 'success',
+                                }),
+                                { updateOnDuplicate: ['txHash', 'batchIndex', 'status'] }
+                            )
                         )
 
                         if (successIndex !== sendableTxs.length) {
                             await Transition.bulkCreate(
-                                sendableTxs.slice(0, successIndex).map((item, index): TransitionAttributes => ({
-                                    ...item,
-                                    txHash: hash,
-                                    batchIndex: index,
-                                    status: 'success'
-                                })).concat(
-                                    sendableTxs.slice(successIndex).map((item, index): TransitionAttributes => ({
-                                        ...item,
-                                        txHash: hash,
-                                        batchIndex: successIndex + index,
-                                        status: 'failed',
-                                        reason: 'batch interrupted'
-                                    }))
-                                ),
+                                sendableTxs
+                                    .slice(0, successIndex)
+                                    .map(
+                                        (item, index): TransitionAttributes => ({
+                                            ...item,
+                                            txHash: hash,
+                                            batchIndex: index,
+                                            status: 'success',
+                                        })
+                                    )
+                                    .concat(
+                                        sendableTxs.slice(successIndex).map(
+                                            (item, index): TransitionAttributes => ({
+                                                ...item,
+                                                txHash: hash,
+                                                batchIndex: successIndex + index,
+                                                status: 'failed',
+                                                reason: 'batch interrupted',
+                                            })
+                                        )
+                                    ),
                                 { updateOnDuplicate: ['txHash', 'batchIndex', 'status', 'reason'] }
                             )
                         }
@@ -171,13 +182,16 @@ export class SenderService {
 
             const isComplated = await this.checkJobComplated(job.get('id'))
 
-            await Job.update({
-                status: isComplated ? 'complated' : 'processing'
-            } ,{ where: { id: job.get('id') } })
+            await Job.update(
+                {
+                    status: isComplated ? 'complated' : 'processing',
+                },
+                { where: { id: job.get('id') } }
+            )
         }
     }
 
-    private async checkExecutorStatus (job: Job) {
+    private async checkExecutorStatus(job: Job) {
         const name = job.get('executor')
         const sender = this.#executor.getExecutor(name)
         const pending = await this.#api.rpc.author.pendingExtrinsics()
@@ -194,7 +208,7 @@ export class SenderService {
         return true
     }
 
-    private async send (call: SubmittableExtrinsic, job: Job, tx: any[]) {
+    private async send(call: SubmittableExtrinsic, job: Job, tx: any[]) {
         const name = job.get('executor')
         const deferred = new Deferred<[string, number]>()
         const sender = this.#executor.getExecutor(name)
@@ -208,39 +222,39 @@ export class SenderService {
                 // check if interrupted
                 const interruptedEvent = result.events
                     .filter(({ event }) => !event)
-                    .filter(({ event: { section, method }}) => {
+                    .filter(({ event: { section, method } }) => {
                         return section === 'utility' && method === 'BatchInterrupted'
                     })
-                
+
                 if (interruptedEvent.length) {
-                    const { data } = interruptedEvent[0].event as unknown as IEvent<[U32F32, DispatchError]>
+                    const { data } = (interruptedEvent[0].event as unknown) as IEvent<[U32F32, DispatchError]>
 
                     deferred.resolve([extrinsics.hash.toString(), data[0].toNumber()])
 
                     return
                 }
 
-                deferred.resolve([extrinsics.hash.toString(), tx.length]);
+                deferred.resolve([extrinsics.hash.toString(), tx.length])
             }
 
             if (result.isError) {
                 const errorEvent = result.events
                     .filter(({ event }) => !event)
-                    .filter(({ event: { section, method }}) => {
+                    .filter(({ event: { section, method } }) => {
                         return section === 'system' && method === 'ExtrinsicFailed'
                     })
-                
+
                 let msg = ''
 
                 if (errorEvent.length) {
-                    const [dispatchError] = errorEvent[0].event as unknown as ITuple<[DispatchError]>;
+                    const [dispatchError] = (errorEvent[0].event as unknown) as ITuple<[DispatchError]>
 
                     if (dispatchError.isModule) {
                         try {
                             const error = this.#api.registry.findMetaError(
                                 new Uint8Array([
                                     dispatchError.asModule.index.toNumber(),
-                                    dispatchError.asModule.error.toNumber()
+                                    dispatchError.asModule.error.toNumber(),
                                 ])
                             )
 
@@ -251,30 +265,30 @@ export class SenderService {
                     }
                 }
 
-                deferred.resolve([extrinsics.toHex(), 0]);
+                deferred.resolve([extrinsics.toHex(), 0])
             }
         })
 
         return deferred.promise
     }
 
-    private async checkJobComplated (jobId: number) {
+    private async checkJobComplated(jobId: number) {
         const created = await Transition.count({
-            where: { jobId, status: 'created' }
+            where: { jobId, status: 'created' },
         })
 
         return created === 0
     }
 
-    private async getJob () {
+    private async getJob() {
         const processing = await Job.findOne({
-            where: { status: 'processing' }
+            where: { status: 'processing' },
         })
 
         if (processing) return processing
 
         const created = await Job.findOne({
-            where: { status: 'created' }
+            where: { status: 'created' },
         })
 
         if (created) return created
@@ -282,10 +296,10 @@ export class SenderService {
         return null
     }
 
-    private async getTransitions (jobId: number, limit = 100) {
+    private async getTransitions(jobId: number, limit = 100) {
         return Transition.findAll({
             where: { jobId, status: 'created' },
-            limit
+            limit,
         })
     }
 }

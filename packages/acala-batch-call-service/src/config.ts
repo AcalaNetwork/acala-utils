@@ -15,14 +15,14 @@ export default class Config implements ConfigAttributes {
     public executors!: ConfigAttributes['executors']
     public web!: ConfigAttributes['web']
 
-    constructor (config: any) {
+    constructor(config: any) {
         this.db = config.db
         this.acala = config.acala
-        this.executors = Object.keys(config.executor).map(key => ({ name: key, ...config.executor[key] }))
+        this.executors = Object.keys(config.executor).map((key) => ({ name: key, ...config.executor[key] }))
         this.web = config.web
     }
 
-    static async create (filename: string = 'config.toml') {
+    static async create(filename: string = 'config.toml') {
         const content = await fs.readFile(path.join(__dirname, '../', filename), { encoding: 'utf-8' })
 
         const config = toml.parse(content)

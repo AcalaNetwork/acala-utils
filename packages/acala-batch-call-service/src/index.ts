@@ -5,7 +5,7 @@ import { ProxyService } from '@acala-utils/batch-call-service'
 
 import Config from './config'
 
-async function start () {
+async function start() {
     const config = await Config.create()
 
     const wsProvider = new WsProvider(config.acala.endpoint)
@@ -15,7 +15,7 @@ async function start () {
         api,
         db: config.db,
         web: config.web,
-        executors: config.executors
+        executors: config.executors,
     })
 
     await service.create()

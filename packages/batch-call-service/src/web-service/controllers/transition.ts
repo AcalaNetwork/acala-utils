@@ -8,28 +8,30 @@ type TransitionParams = {
     params: any[]
 }[]
 
-const paramsValidator: RequestHandler =  (req, res, next) => {
+const paramsValidator: RequestHandler = (req, res, next) => {
     const { executor, signature, transitions } = req.body as {
-        executor: string;
-        signature: string;
+        executor: string
+        signature: string
         transitions: TransitionParams
     }
 
     if (!executor || !signature || !transitions) {
         res.status(400).json({
             code: 20001,
-            message: 'invalid params. executor, message, signature, transitions is requried'
+            message: 'invalid params. executor, message, signature, transitions is requried',
         })
 
         return
     }
 
-    const errorIndex = transitions.findIndex((item) => !item.method || !item.section || !item.params || !Array.isArray(item.params))
+    const errorIndex = transitions.findIndex(
+        (item) => !item.method || !item.section || !item.params || !Array.isArray(item.params)
+    )
 
     if (errorIndex !== -1) {
         res.status(400).json({
             code: 20002,
-            message: `invalid params. at transitons#${errorIndex}`
+            message: `invalid params. at transitons#${errorIndex}`,
         })
 
         return
@@ -45,16 +47,16 @@ export const getTransitionRouter = (executorValidator: RequestHandler) => {
         try {
             const { executor, transitions } = req.body as { executor: string; transitions: TransitionParams }
 
-            const job= await Job.create({
+            const job = await Job.create({
                 executor,
-                status: 'created'
+                status: 'created',
             })
 
             const _transitions = transitions.map((item) => {
                 return {
                     ...item,
                     jobId: job.get('id'),
-                    status: 'created'
+                    status: 'created',
                 }
             }) as TransitionCreationAttributes[]
 
@@ -63,13 +65,13 @@ export const getTransitionRouter = (executorValidator: RequestHandler) => {
             res.status(200).json({
                 message: 'create transition job success',
                 data: {
-                    id: job.get('id')
-                }
+                    id: job.get('id'),
+                },
             })
         } catch (e) {
             res.status(500).json({
                 code: 20003,
-                message: `create transitions job failed, ${e}`
+                message: `create transitions job failed, ${e}`,
             })
         }
     })

@@ -3,22 +3,22 @@ export class Deferred<T> {
     #resolve: any
     #reject: any
 
-    constructor () {
+    constructor() {
         this.#promise = new Promise((resolve, reject) => {
             this.#resolve = resolve
             this.#reject = reject
         })
     }
 
-    get promise () {
+    get promise() {
         return this.#promise
     }
 
-    public resolve (value?: T) {
+    public resolve(value?: T) {
         this.#resolve(value)
     }
 
-    public reject (value?: any) {
+    public reject(value?: any) {
         this.#reject(value)
     }
 }
