@@ -45,9 +45,10 @@ export const getTransitionRouter = (executorValidator: RequestHandler) => {
 
     transitionRouter.post('/', paramsValidator, executorValidator, async (req, res) => {
         try {
-            const { executor, transitions } = req.body as { executor: string; transitions: TransitionParams }
+            const { executor, transitions, sudo } = req.body as { executor: string; transitions: TransitionParams; sudo?: boolean }
 
             const job = await Job.create({
+                sudo,
                 executor,
                 status: 'created',
             })

@@ -6,6 +6,7 @@ interface JobAttributes {
     id: number
     executor: string
     status: JobStatus
+    sudo?: boolean
     reason: string
 }
 
@@ -16,6 +17,7 @@ export class Job extends Model<JobAttributes, JobCreationAttributes> implements 
     public executor!: string
     public status!: JobStatus
     public reason!: string
+    public sudo!: boolean
 }
 
 export function initJobModel(sequelize: Sequelize) {
@@ -38,6 +40,10 @@ export function initJobModel(sequelize: Sequelize) {
                 type: DataTypes.STRING,
                 allowNull: true,
             },
+            sudo: {
+                type: DataTypes.BOOLEAN,
+                allowNull: true
+            }
         },
         {
             indexes: [

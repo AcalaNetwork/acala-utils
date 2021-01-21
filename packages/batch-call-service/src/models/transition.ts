@@ -73,7 +73,7 @@ export function initTransitionModel(sequelize: Sequelize) {
             reason: {
                 type: DataTypes.STRING,
                 allowNull: true,
-            },
+            }
         },
         {
             indexes: [

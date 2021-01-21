@@ -9,7 +9,6 @@ import { Deferred, logger } from '../utils'
 import { Job, Transition } from '../models'
 import type { TransitionAttributes } from '../models'
 import { Executor } from './executor'
-import { Sequelize } from 'sequelize/types'
 
 interface SenderOptions {
     api: ApiPromise
@@ -40,7 +39,8 @@ export class SenderService {
 
     @autobind
     public buildBatchCall(
-        tx: TransitionAttributes[]
+        tx: TransitionAttributes[],
+        job: Job
     ): [
         SubmittableExtrinsic | null,
         (TransitionAttributes & { sendable: boolean })[],
@@ -61,11 +61,15 @@ export class SenderService {
             return [null, [], _tx]
         }
 
-        const call = this.#api.tx.utility.batch(
+        let call =  this.#api.tx.utility.batch(
             sendable.map((item) => {
                 return this.#api.tx[item.section][item.method].apply(this.#api, item.params)
             })
         )
+
+        if (job.get('sudo')) {
+            call = this.#api.tx.sudo.sudo(call)
+        }
 
         return [call, sendable, _tx.filter((item) => !item.sendable)]
     }
@@ -101,7 +105,8 @@ export class SenderService {
                 }
 
                 const [call, sendableTxs, errroTxs] = this.buildBatchCall(
-                    transitions.map((item) => item.toJSON()) as TransitionAttributes[]
+                    transitions.map((item) => item.toJSON()) as TransitionAttributes[],
+                    job
                 )
 
                 if (errroTxs.length) {
