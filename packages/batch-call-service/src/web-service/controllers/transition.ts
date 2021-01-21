@@ -45,15 +45,15 @@ export const getTransitionRouter = (executorValidator: RequestHandler, sequelize
     const transitionRouter = express.Router()
 
     transitionRouter.post('/', paramsValidator, executorValidator, async (req, res) => {
+        const transition = await sequelize.transaction();
+
         try {
             const { executor, transitions, sudo } = req.body as { executor: string; transitions: TransitionParams; sudo?: boolean }
-
-            const transition = await sequelize.transaction();
 
             const job = await Job.create({
                 sudo,
                 executor,
-                status: 'created',
+                status: 'creating',
             })
 
             const _transitions = transitions.map((item) => {
@@ -66,6 +66,12 @@ export const getTransitionRouter = (executorValidator: RequestHandler, sequelize
 
             await Transition.bulkCreate(_transitions)
 
+            await Job.update({
+                status: 'created'
+            }, {
+                where: { id: job.get('id') }
+            });
+
             await transition.commit();
 
             res.status(200).json({
@@ -75,6 +81,7 @@ export const getTransitionRouter = (executorValidator: RequestHandler, sequelize
                 },
             })
         } catch (e) {
+            await transition.rollback()
             res.status(500).json({
                 code: 20003,
                 message: `create transitions job failed, ${e}`,

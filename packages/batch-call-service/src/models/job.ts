@@ -1,6 +1,6 @@
 import { Sequelize, Model, Optional, DataTypes } from 'sequelize'
 
-type JobStatus = 'created' | 'processing' | 'complated' | 'error'
+type JobStatus = 'creating' | 'created' | 'processing' | 'complated' | 'error'
 
 interface JobAttributes {
     id: number
