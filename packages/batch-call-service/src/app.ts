@@ -39,26 +39,27 @@ export class ProxyService {
             this.initExecutor()
             await this.initDB()
 
-            await this.initSenderService()
             await this.initWebService()
+            await this.initSenderService()
         } catch (e) {
             logger.error('service initialize failed,', e)
         }
     }
 
-    private initSenderService() {
+    private async initSenderService() {
         this.#senderService = new SenderService({
             api: this.#api,
             executor: this.#executor,
         })
 
-        this.#senderService.start()
+        await this.#senderService.start()
     }
 
     private async initWebService() {
         const webService = new WebService({
             port: this.#config.web.port || 3000,
             executorVerifyHandler: this.#executor.verify,
+            sequelize: this.#sequelize
         })
 
         await webService.start()

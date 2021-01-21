@@ -4,10 +4,12 @@ import bodyParser from 'body-parser'
 
 import { Deferred, logger } from '../utils'
 import { getTransitionRouter } from './controllers'
+import { Sequelize } from 'sequelize/types'
 
 interface WebServiceConfig {
     port: number
-    executorVerifyHandler: (name: string, signature: string) => Promise<boolean>
+    executorVerifyHandler: (name: string, signature: string) => Promise<boolean>,
+    sequelize: Sequelize
 }
 
 class WebService {
@@ -38,7 +40,7 @@ class WebService {
     }
 
     private initRouters() {
-        this.#app.use('/transition', getTransitionRouter(this.executorVerifyMiddleware))
+        this.#app.use('/transition', getTransitionRouter(this.executorVerifyMiddleware, this.#config.sequelize))
     }
 
     private initMiddlewares() {

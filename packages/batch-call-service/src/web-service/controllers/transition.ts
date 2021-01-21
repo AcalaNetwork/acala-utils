@@ -1,6 +1,7 @@
 import express, { RequestHandler } from 'express'
 import { Job, Transition } from '../../models'
 import type { TransitionCreationAttributes } from '../../models'
+import { Sequelize } from 'sequelize/types'
 
 type TransitionParams = {
     method: string
@@ -40,12 +41,14 @@ const paramsValidator: RequestHandler = (req, res, next) => {
     }
 }
 
-export const getTransitionRouter = (executorValidator: RequestHandler) => {
+export const getTransitionRouter = (executorValidator: RequestHandler, sequelize: Sequelize) => {
     const transitionRouter = express.Router()
 
     transitionRouter.post('/', paramsValidator, executorValidator, async (req, res) => {
         try {
             const { executor, transitions, sudo } = req.body as { executor: string; transitions: TransitionParams; sudo?: boolean }
+
+            const transition = await sequelize.transaction();
 
             const job = await Job.create({
                 sudo,
@@ -62,6 +65,8 @@ export const getTransitionRouter = (executorValidator: RequestHandler) => {
             }) as TransitionCreationAttributes[]
 
             await Transition.bulkCreate(_transitions)
+
+            await transition.commit();
 
             res.status(200).json({
                 message: 'create transition job success',

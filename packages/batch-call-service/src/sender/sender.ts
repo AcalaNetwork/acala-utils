@@ -81,6 +81,8 @@ export class SenderService {
 
             if (!job) continue
 
+            logger.info(`try job#${job.get('id')}`);
+
             const isSendable = await this.checkExecutorStatus(job)
 
             if (!isSendable) continue
@@ -181,6 +183,8 @@ export class SenderService {
                     } catch (e) {
                         // ingore error
                         logger.error(`execute error at ${job.get('id')}, ${e}`)
+
+                        continue
                     }
                 }
 
@@ -278,11 +282,11 @@ export class SenderService {
     }
 
     private async checkJobComplated(jobId: number) {
-        const created = await Transition.count({
+        const createdCount = await Transition.count({
             where: { jobId, status: 'created' },
         })
 
-        return created === 0
+        return createdCount === 0
     }
 
     private async getJob() {
@@ -294,6 +298,7 @@ export class SenderService {
 
         const created = await Job.findOne({
             where: { status: 'created' },
+            order: [['id', 'ASC']]
         })
 
         if (created) return created
